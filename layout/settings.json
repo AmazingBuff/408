@@ -1,0 +1,108 @@
+{
+    "workbench.editor.enablePreview": false,
+    "window.zoomLevel": 2,
+    "C_Cpp.clang_format_path": "Visual Studio",
+    "C_Cpp.clang_format_style": "Visual Studio",
+    "editor.fontSize": 20,
+    "workbench.colorTheme": "Quiet Light",
+    "editor.formatOnType": true,
+    "editor.semanticTokenColorCustomizations": {
+    
+    },
+    "editor.tokenColorCustomizations": {
+        "comments": "#b0b0b0",
+        "keywords": "#416ed8", 
+        "variables": "#863b6d", 
+        "strings": "#cd1b0eb0", 
+        "functions": "#916a28c9", 
+        "numbers": "#9d1fbd", 
+        "types": "#73c4c8",
+        "textMateRules": [
+            {
+                "scope": "keyword.control",
+                "settings": {
+                    "foreground": "#C586C0"
+                }
+            },
+            {
+                "scope": "keyword.operator",
+                "settings": {
+                    "foreground": "#f08c3b"
+                }
+            },
+            {
+                "scope": "storage.modifier",
+                "settings": {
+                    "foreground": "#f09090"
+                }
+            },
+            {
+                "scope": "entity.name.type.class",
+                "settings": {
+                    "foreground": "#8d4958"
+                }
+            },
+            {
+                "scope": "storage.type.primitive.java",
+                "settings": {
+                    "foreground": "#c0526a"
+                }
+            },
+            {
+                "scope": "entity.name.type.interface",
+                "settings": {
+                    "foreground": "#c0526a"
+                }
+            },
+            {
+                "scope": "entity.name.namespace",
+                "settings": {
+                    "foreground": "#74817c"
+                }
+            },
+            {
+                "scope": "entity.name.tag",
+                "settings": {
+                    "foreground": "#d35c5c"
+                }
+            }
+        ]
+    },
+  
+    "workbench.colorCustomizations": {
+        "editor.selectionBackground": "#979797"
+    },
+    "editor.codeActionsOnSave": {
+
+
+    
+    },
+    "editor.formatOnPaste": true,
+    "C_Cpp.formatting": "clangFormat",
+    "editor.fontWeight": "500",
+    "glsllint.languageSettings": {
+        "javascript": {
+            "parser": "TSAST"
+        },
+        "javascriptreact": {
+            "parser": "TSAST"
+        },
+        "typescript": {
+            "parser": "TSAST"
+        },
+        "typescriptreact": {
+            "parser": "TSAST"
+        },
+        "elm": {
+            "parser": "REGEX",
+            "patternStart": "\\[glsl",
+            "patternEnd": "\\|\\]"
+        }
+    },
+    "typescript.tsserver.watchOptions": {
+    
+    },
+    "git.autofetch": true,
+    "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
+    "git.confirmSync": false,
+}
