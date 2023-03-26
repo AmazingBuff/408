@@ -1,4 +1,5 @@
 #include"../textbook/BasicVariable.h"
+#include"vector.h"
 
 template<typename T>
 struct Stack
@@ -40,7 +41,7 @@ public:
 
     void destroy()
     {
-        while (topPtr)
+        while(topPtr)
             pop();
     }
 
@@ -61,7 +62,7 @@ public:
 
 //page.67
 //3.
-bool legalIO(std::vector<char>& operators)
+bool legalIO(Vector<char>& operators)
 {
     Stack<char> st;
     for(auto& op : operators)

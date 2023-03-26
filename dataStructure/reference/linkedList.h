@@ -1,11 +1,12 @@
 #include"../textbook/BasicVariable.h"
+#include"Vector.h"
 
 struct LinkedList
 {
     ElemType data;
     LinkedList* next = nullptr;
     LinkedList(ElemType& element) : data(element) { }
-    LinkedList() : data(0) { }
+    LinkedList() : data(-1) { }
 };
 
 struct LoopLinkedList
@@ -68,7 +69,7 @@ void deleteValueWithHead(LinkedList* head, ElemType value)
 }
 
 //3.
-void reverseOutput(LinkedList* head, std::vector<ElemType>& output)
+void reverseOutput(LinkedList* head, Vector<ElemType>& output)
 {
     if(!head)
         return;
@@ -192,10 +193,10 @@ LinkedList* findPublicNode(LinkedList* list1, LinkedList* list2)
 }
 
 //9.
-std::vector<ElemType> printOrdered(LinkedList* head)
+Vector<ElemType> printOrdered(LinkedList* head)
 {
     LinkedList* list = sortLesser(head);
-    std::vector<ElemType> out;
+    Vector<ElemType> out;
     while(list->next)
     {
         out.push_back(list->next->data);
@@ -406,10 +407,10 @@ LinkedList* linkTwoList(LinkedList* head1, LinkedList* head2)
 
 
 //19.
-std::vector<ElemType> outputMinValue(LinkedList* head)
+Vector<ElemType> outputMinValue(LinkedList* head)
 {
     LinkedList* prev = head;
-    std::vector<ElemType> out;
+    Vector<ElemType> out;
     while(prev->next)
     {
         LinkedList* cur = prev->next;

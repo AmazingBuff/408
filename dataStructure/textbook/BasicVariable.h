@@ -1,10 +1,10 @@
 #include<iostream>
 #include<functional>
 #include<assert.h>
+#include<cstring>
+#include<cstdlib>
 
 using ElemType = int;
-//using Compare = std::function<Status(ElemType, ElemType)>;
-typedef Status (*Compare)(ElemType, ElemType);
 
 enum class Status : int
 {
@@ -15,11 +15,24 @@ enum class Status : int
     OVER       = -2
 };
 
+using Compare = std::function<Status(ElemType, ElemType)>;
+//typedef Status (*Compare)(ElemType, ElemType);
+
+template<typename T>
+struct List
+{
+    T data;
+    List* next = nullptr;
+    List(T& element) : data(element) { }
+    List() : data(0) { }
+};
+
+
 template<typename T, typename U>
 int binarySearch(U& container, T target)
 {
     int left = 0;
-    int right = container.Length() - 1;
+    int right = container.size() - 1;
     while(left <= right)
     {
         int middle = (left + right) >> 1;

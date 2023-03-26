@@ -1,5 +1,6 @@
 #include"../textbook/BasicVariable.h"
 #include"stack.h"
+#include"vector.h"
 
 template<typename T>
 struct CircularQueue
@@ -135,7 +136,7 @@ public:
 
     void destroy()
     {
-        while(!empty());
+        while(!empty())
             dequeue();
     }
 };
@@ -307,3 +308,53 @@ public:
         return space;
     }
 };
+
+
+//Page. 92
+//1.
+bool match(Vector<char>& brackets)
+{
+    Stack<char> matchStack;
+    matchStack.push(brackets[0]);
+    for(uint32_t i = 1; i < brackets.size(); i++)
+    {
+        if(matchStack.top() == '(' && brackets[i] == ')')
+            matchStack.pop();
+        else if(matchStack.top() == '[' && brackets[i] == ']')
+            matchStack.pop();
+        else if(matchStack.top() == '{' && brackets[i] == '}')
+            matchStack.pop();
+        else
+            matchStack.push(brackets[i]);
+    }
+    if(matchStack.empty())
+        return true;
+    else
+        return false;
+}
+
+//2.
+
+//3.
+int compute(int order, int value)
+{
+    assert(order >= 0);
+    if(order == 0)
+        return 1;
+    else if(order == 1)
+        return 2 * value;
+    else
+    {
+        int i = 2;
+        int p0 = 1;
+        int p1 = 2 * value;
+        while (i <= order)
+        {
+            int tmp = p1;
+            p1 = 2 * value * p1 - 2 * (i - 1) * p0;
+            p0 = p1; 
+            i++;
+        }
+        return p1; 
+    }
+}

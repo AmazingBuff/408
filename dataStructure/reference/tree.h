@@ -1,6 +1,17 @@
 #include"../textbook/BasicVariable.h"
 #include"queue.h"
 #include"vector.h"
+#include"list.h"
+
+template<typename T>
+struct TreeNode
+{
+    T data = 0;
+    TreeNode* left = nullptr;
+    TreeNode* right = nullptr;
+    TreeNode(T& element) : data(element) {}
+    TreeNode() {}
+};
 
 template<typename T>
 struct BinaryTree
@@ -688,23 +699,27 @@ uint32_t heightStack(TreeNode<T>* root)
 
 //6.
 template<typename T>
-BinaryTree<T> generateFromPreOrderAndInOrder(Vector<T>& preOrder, Vector<T>& inOrder)
+void generateFromPreOrderAndInOrder(Vector<T>& preOrder, Vector<T>& inOrder, TreeNode<T>*& root)
 {
-    Vector<T> levelOrder;
-    T root = preOrder[0];
-    levelOrder.push_back(root);
-    Vector<T> left;
-    Vector<T> right;
-    
-    for(auto& it : inOrder)
+    if (preOrder.size() == 1 || inOrder.size() == 1)
     {
-        if(it == root)
-        {
-            left = Vector<T>(inOrder.begin(), &it);
-            right = Vector<T>(&it + 1, inOrder.end());
-            break;
-        }
+        root = new TreeNode<T>(preOrder[0]);
+        return;
     }
+    else if (preOrder.empty() || inOrder.empty())
+        return;
+
+    root = new TreeNode<T>(preOrder[0]);
+    uint32_t inMidIndex = inOrder.find(preOrder[0]);
+    Vector<T> inLeft(inOrder.begin(), inOrder.begin() + inMidIndex);
+    Vector<T> inRight(inOrder.begin() + inMidIndex + 1, inOrder.end());
+
+    uint32_t preMidIndex = inLeft.size();
+    Vector<T> preLeft(preOrder.begin() + 1, preOrder.begin() + preMidIndex + 1);
+    Vector<T> preRight(preOrder.begin() + preMidIndex + 1, preOrder.end());
+    
+    generateFromPreOrderAndInOrder(preLeft, inLeft, root->left);
+    generateFromPreOrderAndInOrder(preRight, inRight, root->right);
 }
 
 
@@ -836,7 +851,16 @@ void printAllAncestor(TreeNode<T>* root, T value, Vector<T>& arr)
 template<typename T>
 TreeNode<T>* publicAncestor(TreeNode<T>* root, TreeNode<T>* p, TreeNode<T>* q)
 {
-    
+    if(root == nullptr)
+        return nullptr;
+    else if(root == p || root == q)
+        return root;
+    TreeNode<T>* left = publicAncestor(root->left);
+    TreeNode<T>* right = publicAncestor(root->right);
+    if(left == p || left == q)
+        return left;
+    else if(right == p || right == p)
+        return right;
 }
 
 //14.
@@ -909,13 +933,379 @@ bool similarBinaryTree(TreeNode<T>* p, TreeNode<T>* q)
 //18
 
 //19
+template<typename T>
+T depthWPL(TreeNode<T>* root)
+{
+    Queue<TreeNode<T>*> queue;
+    if (root)
+        queue.enqueue(root);
+    T ret = 0;
+    uint32_t depth = 0;
+    while (!queue.empty())
+    { 
+        depth++;
+        uint32_t length = queue.size();
+        for (uint32_t i = 0; i < length; i++)
+        {
+            root = queue.front();
+            if (root->left == nullptr && root->right == nullptr)
+                ret += depth * root->data;
+            else
+            {
+                if (root->left)
+                    queue.enqueue(root->left);
+                if (root->right)
+                    queue.enqueue(root->right);
+            }
+            queue.dequeue();
+        }   
+    }
+    return ret;
+}
 
 //20
 template<typename T = char>
-Vector<T> generateEqualExpression(TreeNode<T>* root)
+void generateEqualExpression(TreeNode<T>* root, TreeNode<T>* prev, Vector<T>& ret)
 {
-    if(root == nullptr)
-        return {};
-    Vector<T> front = generateEqualExpression(root->left);
-    Vector<T> tail = generateEqualExpression(root->right);
+    if (root->left == nullptr && root->right == nullptr && root == prev->left)
+    {
+        ret.push_back('(');
+        ret.push_back(root->data);
+        return;
+    }
+    else if (root->left == nullptr && root->right == nullptr && root == prev->right)
+    {
+        ret.push_back(root->data);
+        ret.push_back(')');
+        return;
+    }
+    else if (root->left == nullptr)
+    {
+        ret.push_back('(');
+        ret.push_back(root->data);
+        generateEqualExpression(root->right, root, ret);
+        ret.push_back(')');
+        return;
+    }
+    generateEqualExpression(root->left, root, ret);
+    ret.push_back(root->data);
+    generateEqualExpression(root->right, root, ret);
+}
+
+//21.
+
+
+
+template<typename T>
+struct CSTreeNode
+{
+public:
+    T data;
+    CSTreeNode* firstChild = nullptr;
+    CSTreeNode* nextSibling = nullptr;
+    CSTreeNode(T& element) : data(element) {}
+    CSTreeNode() : data(0) {}
+
+    CSTreeNode(const TreeNode<T>* root)
+    {
+        assert(root);
+        CSTreeNode* newRoot = transformation(root);
+        data = newRoot->data;
+        firstChild = newRoot->firstChild;
+        nextSibling = newRoot->nextSibling;
+    }
+private:
+    CSTreeNode transformation(const TreeNode<T>* root)
+    {
+        if(root == nullptr)
+            return nullptr;
+        CSTreeNode* left = transformation(root->left);
+        CSTreeNode* right = transformation(root->right);
+        CSTreeNode* node = new CSTreeNode(root->data);
+        node->firstChild = left;
+        node->nextSibling = right;
+        return node;
+    }
+};
+
+template<typename T>
+struct Tree
+{
+    T data;
+    Tree** children = nullptr;
+    uint32_t degree = 0;
+
+    Tree(T& element, uint32_t& degree) : data(element), degree(degree) {}
+    Tree() : data(0) {}
+};
+
+
+template<typename T>
+Tree<T>* generateTree(Vector<T>& levelOrder, Vector<uint32_t>& degree)
+{
+    assert(levelOrder.size() == degree.size());
+    Tree<T>* root = new Tree<T>(levelOrder[0], degree[0]);
+    Queue<Tree<T>*> queue;
+    queue.enqueue(root);
+    uint32_t count = 1;
+    while (!queue.empty())
+    {
+        Tree<T>* cur = queue.front();
+        for (uint32_t i = 0; i < cur->children.capacity(); i++)
+        {
+            Tree<T>* node = new Tree<T>(levelOrder[count], degree[count]);
+            queue.enqueue(node);
+            cur->children.push_back(node);
+            count++;
+        }
+        queue.dequeue();
+    }
+    return root;
+}
+
+
+template<typename T>
+CSTreeNode<T>* transformCS(Tree<T>* root)
+{
+    assert(root);
+    CSTreeNode<T>* ret = new CSTreeNode<T>(root->data);
+    Queue<Tree<T>*> queue;
+    Queue<CSTreeNode<T>*> csQueue;
+    queue.enqueue(root);
+    csQueue.enqueue(ret);
+    while (!queue.empty())
+    {
+        root = queue.front();
+        CSTreeNode<T>* cur = csQueue.front();
+        CSTreeNode<T>* prev = nullptr;
+        for (uint32_t i = 0; i < root->children.capacity(); i++)
+        {
+            CSTreeNode<T>* node = new CSTreeNode<T>(root->children[i]->data);
+            if (i == 0)
+            {
+                prev = node;
+                cur->firstChild = prev;
+            }
+            else
+            {
+                prev->nextSibling = node;
+                prev = node;
+            }
+            queue.enqueue(root->children[i]);
+            csQueue.enqueue(node);
+        }
+        queue.dequeue();
+        csQueue.dequeue();
+    }
+    return ret;
+}
+
+//page. 170
+//4.
+template<typename T>
+uint32_t leafNodeInForest(CSTreeNode<T>* root)
+{
+    if (root == nullptr)
+        return 0;
+    return leafNodeInForest(root->firstChild) + leafNodeInForest(root->nextSibling) + (root->firstChild ? 0 : 1);
+}
+
+//5.
+template<typename T>
+uint32_t depthInCS(CSTreeNode<T>* root)
+{
+    if (root == nullptr)
+        return 0;
+    uint32_t left = depthInCS(root->firstChild);
+    uint32_t right = depthInCS(root->nextSibling);
+    return left >= right ? left + 1 : right;
+}
+
+//6.
+template<typename T>
+CSTreeNode<T>* generateFromLevelOrder(Vector<T>& levelOrder, Vector<uint32_t>& degrees)
+{
+    assert(levelOrder.size() == degrees.size());
+    CSTreeNode<T>* root = new CSTreeNode<T>(levelOrder[0]);
+    Queue<CSTreeNode<T>*> queue;
+    queue.enqueue(root);
+    uint32_t count = 1;
+    uint32_t pos = 0;
+    while (!queue.empty())
+    {
+        CSTreeNode<T>* cur = queue.front();
+        CSTreeNode<T>* prev = nullptr;
+        uint32_t degree = degrees[pos];
+        for (uint32_t i = 0; i < degree; i++)
+        {
+            CSTreeNode<T>* node = new CSTreeNode<T>(levelOrder[count]);
+            if (i == 0)
+            {
+                prev = node;
+                cur->firstChild = prev;
+            }
+            else
+            {
+                prev->nextSibling = node;
+                prev = node;
+            }
+            queue.enqueue(node);
+            count++;
+        }
+        queue.dequeue();
+        pos++;
+    }
+    return root;
+}
+
+
+//Huffman tree
+template<typename T>
+struct HuffmanNode
+{
+    T data = 0;
+    TreeNode* left = nullptr;
+    TreeNode* right = nullptr;
+    uint32_t weight = 0;
+    HuffmanNode(const T& element, const uint32_t& weight) : data(element), weight(weight) {}
+    HuffmanNode() {}
+};
+
+template<typename T>
+struct HuffmanTree
+{
+private:
+    HuffmanNode<T>* root = nullptr;
+
+public:
+    HuffmanTree(HuffmanNode<T>* root) : root(root) {}
+
+    Vector<uint32_t> HuffmanCodeTrans() const
+    {
+        Queue<HuffmanNode<T>*> queue;
+        Queue<uint32_t> codeQueue;
+        if (root)
+        {
+            queue.enqueue(root);
+            codeQueue.enqueue(0xf0000000);
+        }
+        Vector<uint32_t> ret;
+        while (!queue.empty())
+        {
+            uint32_t length = queue.size();
+            for (uint32_t i = 0; i < length; i++)
+            {
+                HuffmanNode<T>* cur = queue.front();
+                uint32_t code = codeQueue.front();
+                if (cur->left == nullptr && cur->right == nullptr)
+                    ret.push_back(code);
+                else
+                {
+                    if (cur->right)
+                    {
+                        queue.enqueue(cur->right);
+                        codeQueue.enqueue(code << 1 | 1);
+                    } 
+                    if (cur->left)
+                    {
+                        queue.enqueue(cur->left);
+                        codeQueue.enqueue(code << 1 | 0);
+                    }  
+                }
+                queue.dequeue();
+                codeQueue.dequeue();
+            }   
+        }
+        return ret;
+    }
+
+    uint32_t WPL() const
+    {
+        Queue<HuffmanNode<T>*> queue;
+        if (root)
+            queue.enqueue(root);
+        uint32_t ret = 0;
+        uint32_t depth = 0;
+        while (!queue.empty())
+        { 
+            depth++;
+            uint32_t length = queue.size();
+            for (uint32_t i = 0; i < length; i++)
+            {
+                HuffmanNode<T>* cur = queue.front();
+                if (cur->left == nullptr && cur->right == nullptr)
+                    ret += depth * cur->weight;
+                else
+                {
+                    if (cur->left)
+                        queue.enqueue(cur->left);
+                    if (cur->right)
+                        queue.enqueue(cur->right);
+                }
+                queue.dequeue();
+            }   
+        }
+        return ret;
+    }
+};
+
+
+template<typename T>
+HuffmanNode<T>* createHuffmanTree(LinkedList<T>& values, LinkedList<uint32_t>& weights)
+{
+    assert(values.size() == weights.size());
+    auto compare_less = [](uint32_t a, uint32_t b)
+    {
+        if(a < b)
+            return true;
+        else
+            return false;
+    };
+
+    HuffmanNode<T>* cur = nullptr;
+    LinkedList<HuffmanNode<T>*> prev;
+    LinkedList<uint32_t> preWeight;
+    while(!weights.empty())
+    {
+        uint32_t minIndex = weights.findMin(compare_less);
+        uint32_t min2Index = weights.findMin(compare_less, minIndex);
+        uint32_t newWieght = weights[minIndex] + weights[min2Index];
+
+        weights.pop(minIndex);
+        weights.pop(min2Index);
+        weights.push_back(newWieght);
+        values.pop(minIndex);
+        values.pop(min2Index);
+        values.push_back(0);
+
+        HuffmanNode<T>* leftNode = nullptr;
+        HuffmanNode<T>* rightNode = nullptr;
+
+        uint32_t weIndex = preWeight.find(weights[minIndex]);
+        if(weIndex != preWeight.end())
+        {
+            leftNode = prev[weIndex];
+            preWeight.pop(weIndex);
+            prev.pop(weIndex);
+        }
+        else
+            leftNode = new HuffmanNode<T>(values[minIndex], weights[minIndex]);
+        
+        weIndex = preWeight.find(weights[min2Index]);
+        if(weIndex != preWeight.end())
+        {
+            rightNode = prev[weIndex];
+            preWeight.pop(weIndex);
+            prev.pop(weIndex);
+        }
+        else
+            rightNode = new HuffmanNode<T>(values[min2Index], weights[min2Index]);
+        
+        cur = new HuffmanNode<T>(0, newWieght);
+        cur->left = leftNode;
+        cur->right = rightNode;
+
+        prev.push_back(cur);
+        preWeight.push_back(newWieght);
+    }
 }
