@@ -7,22 +7,16 @@ private:
     T* data;
     uint32_t space;
     uint32_t length;
-    void increaseCapacity()
-    {
-        uint32_t newSpace = space > 20 ? space + 8 : 2 * space + 1;
-        T* newData = new T[newSpace];
-        memcpy(newData, data, space);
-        delete[] data;
-        data = newData;
-        space = newSpace;
-    }
 public:
     Vector(uint32_t size = 0) : space(size > 10 ? size + 8 : 2 * size), length(0)
     {
         if (size == 0)
             data = nullptr;
         else
+        {
             data = new T[space];
+            length = space;
+        }
     }
 
     ~Vector()
@@ -99,7 +93,8 @@ public:
 
     uint32_t find(T& element) const
     {
-        for (uint32_t i = 0; i < length; i++)
+        uint32_t i = 0;
+        for (; i < length; i++)
         {
             if (data[i] == element)
                 return i;
@@ -107,13 +102,13 @@ public:
         return length;
     }
 
-    uint32_t findMin(bool(*compare_lesser)(T,T)) const
+    uint32_t findMin(bool(*compare_lesser)(T, T)) const
     {
         T min = data[0];
         uint32_t ret = 0;
-        for(uint32_t i = 1; i < length; i++)
+        for (uint32_t i = 1; i < length; i++)
         {
-            if(compare_lesser(data[i], min))
+            if (compare_lesser(data[i], min))
             {
                 min = data[i];
                 ret = i;
@@ -122,28 +117,13 @@ public:
         return ret;
     }
 
-    uint32_t findMin(bool(*compare_lesser)(T,T), const T& exception) const
+    uint32_t findMin(bool(*compare_lesser)(T, T), const uint32_t& exceptedIndex) const
     {
         T min = data[0];
         uint32_t ret = 0;
-        for(uint32_t i = 1; i < length; i++)
+        for (uint32_t i = 1; i < length; i++)
         {
-            if(compare_lesser(data[i], min) && data[i] != exception)
-            {
-                min = data[i];
-                ret = i;
-            }
-        }
-        return ret;
-    }
-
-    uint32_t findMin(bool(*compare_lesser)(T,T), const uint32_t exceptedIndex) const
-    {
-        T min = data[0];
-        uint32_t ret = 0;
-        for(uint32_t i = 1; i < length; i++)
-        {
-            if(compare_lesser(data[i], min) && i != exceptedIndex)
+            if (compare_lesser(data[i], min) && i != exceptedIndex)
             {
                 min = data[i];
                 ret = i;
@@ -155,7 +135,10 @@ public:
     void push_back(T& value)
     {
         if (full())
-            increaseCapacity();
+        {
+            uint32_t newSpace = space > 20 ? space + 8 : 2 * space + 1;
+            increase_capacity(newSpace);
+        }
         data[length] = value;
         length++;
     }
@@ -163,7 +146,10 @@ public:
     void push_back(T&& value)
     {
         if (full())
-            increaseCapacity();
+        {
+            uint32_t newSpace = space > 20 ? space + 8 : 2 * space + 1;
+            increase_capacity(newSpace);
+        }
         data[length] = value;
         length++;
     }
@@ -188,6 +174,7 @@ public:
         space = newSize;
         if (space > length)
             memset(data + length, 0, sizeof(T) * (space - length));
+        length = space;
     }
 
     T back() const
@@ -220,15 +207,15 @@ public:
         return data + length;
     }
 
-    T& operator[](int index)
+    T& operator[](uint32_t index)
     {
-        assert(index > -1 && index < length);
+        assert(index < length);
         return data[index];
     }
 
-    const T& operator[](int index) const
+    const T& operator[](uint32_t index) const
     {
-        assert(index > -1 && index < length);
+        assert(index < length);
         return data[index];
     }
 
@@ -250,6 +237,27 @@ public:
     uint32_t capacity() const
     {
         return space;
+    }
+
+    void destory()
+    {
+        delete[] data;
+        data = nullptr;
+        length = 0;
+        space = 0;
+    }
+
+    void increase_capacity(uint32_t newSpace)
+    {
+        T* newData = new T[newSpace];
+        if (data)
+        {
+            for (uint32_t i = 0; i < length; i++)
+                newData[i] = data[i];
+            delete[] data;
+        }
+        data = newData;
+        space = newSpace;
     }
 
     T* statistics() const
