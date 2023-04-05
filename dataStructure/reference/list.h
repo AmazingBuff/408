@@ -231,11 +231,6 @@ public:
         return length;
     }
 
-    uint32_t end() const
-    {
-        return length;
-    }
-
     bool empty() const
     {
         return length == 0;
@@ -245,5 +240,25 @@ public:
     {
         while(length)
             pop_back(); 
+    }
+
+    List<T>* begin()
+    {
+        return head->next;
+    }
+
+    const List<T>* cbegin() const
+    {
+        return head->next;
+    }
+
+    List<T>* end()
+    {
+        return tail;
+    }
+
+    const List<T>* cend() const
+    {
+        return tail;
     }
 };

@@ -1,4 +1,4 @@
-#include"vector.h"
+#include"hash.h"
 
 //adjacency list
 template<typename T>
