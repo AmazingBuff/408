@@ -285,3 +285,11 @@ private:
         return Hash()(key) % size;
     }
 };
+template<typename Ty_Key, typename Ty_Val>
+struct HashNode
+{
+    Ty_Key key;
+    Ty_Val value;
+    HashNode() { memset(this, 0, sizeof(HashNode<Ty_Key, Ty_Val>)); }
+    HashNode(const Ty_Val& key, const Ty_Val val) : key(key), value(val) {}
+};
