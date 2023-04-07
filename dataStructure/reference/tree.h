@@ -397,7 +397,7 @@ private:
             return;
         else
         {
-            //store left pointer to aviod revising
+            //store left pointer to avoid revising
             ThreadedTreeNode<T>* left = node->left;
             //can't handle next for current parse
             if (!node->left)
@@ -859,7 +859,7 @@ TreeNode<T>* publicAncestor(TreeNode<T>* root, TreeNode<T>* p, TreeNode<T>* q)
     TreeNode<T>* right = publicAncestor(root->right);
     if(left == p || left == q)
         return left;
-    else if(right == p || right == p)
+    else if(right == p || right == q)
         return right;
 }
 
@@ -1269,11 +1269,11 @@ HuffmanNode<T>* createHuffmanTree(LinkedList<T>& values, LinkedList<uint32_t>& w
     {
         uint32_t minIndex = weights.findMin(compare_less);
         uint32_t min2Index = weights.findMin(compare_less, minIndex);
-        uint32_t newWieght = weights[minIndex] + weights[min2Index];
+        uint32_t newWeight = weights[minIndex] + weights[min2Index];
 
         weights.pop(minIndex);
         weights.pop(min2Index);
-        weights.push_back(newWieght);
+        weights.push_back(newWeight);
         values.pop(minIndex);
         values.pop(min2Index);
         values.push_back(0);
@@ -1301,11 +1301,11 @@ HuffmanNode<T>* createHuffmanTree(LinkedList<T>& values, LinkedList<uint32_t>& w
         else
             rightNode = new HuffmanNode<T>(values[min2Index], weights[min2Index]);
         
-        cur = new HuffmanNode<T>(0, newWieght);
+        cur = new HuffmanNode<T>(0, newWeight);
         cur->left = leftNode;
         cur->right = rightNode;
 
         prev.push_back(cur);
-        preWeight.push_back(newWieght);
+        preWeight.push_back(newWeight);
     }
 }

@@ -8,6 +8,12 @@ struct AdjArcNode
     AdjArcNode* nextArc = nullptr;
     T information;
     AdjArcNode(const uint32_t& vertex, const T& info = 0) : vertexIndex(vertex), information(info) {}
+    ~AdjArcNode()
+    {
+        if(nextArc)
+            delete nextArc;
+        nextArc = nullptr;
+    }
 };
 
 template<typename T, typename U>
@@ -16,6 +22,12 @@ struct AdjVertexNode
     T data;
     AdjArcNode<U>* firstArc;
     AdjVertexNode(const T& element, AdjArcNode<U>*& arc = nullptr) : data(element), firstArc(arc) {}
+    ~AdjVertexNode()
+    {
+        if(firstArc)
+            delete firstArc;
+        firstArc = nullptr;
+    }
 };
 
 
@@ -29,6 +41,15 @@ struct OrthArcNode
     OrthArcNode* tailLink = nullptr;
     T information;
     OrthArcNode(const uint32_t& headVertex, const uint32_t& tailVertex, const T& info = 0) : arcHead(headVertex), arcTail(tailVertex), information(info) {}
+    ~OrthArcNode()
+    {
+        if(headLink)
+            delete headLink;
+        if(tailLink)
+            delete tailLink;
+        headLink = nullptr;
+        tailLink = nullptr;
+    }
 };
 
 template<typename T, typename U>
@@ -40,6 +61,15 @@ struct OrthVertexNode
     OrthVertexNode(const T& element) : data(element) {}
     OrthVertexNode(const T& element, OrthArcNode<U>*& arcIn = nullptr, OrthArcNode<U>*& arcOut = nullptr) 
     : data(element), firstIn(arcIn), firstOut(arcOut) {}
+    ~OrthVertexNode()
+    {
+        if(firstIn)
+            delete firstIn;
+        if(firstOut)
+            delete firstOut;
+        firstIn = nullptr;
+        firstOut = nullptr;
+    }
 };
 
 
@@ -55,6 +85,15 @@ struct AdjMultArcNode
     T information;
     AdjMultArcNode(const uint32_t& headVertex, const uint32_t& tailVertex, const T& info = 0) 
     : arcHead(headVertex), arcTail(tailVertex), information(info) {}
+    ~AdjMultArcNode()
+    {
+        if(headLink)
+            delete headLink;
+        if(tailLink)
+            delete tailLink;
+        headLink = nullptr;
+        tailLink = nullptr;
+    }
 };
 
 template<typename T, typename U>
@@ -63,6 +102,12 @@ struct AdjMultVertexNode
     T data;
     AdjMultArcNode<U>* firstArc;
     AdjMultVertexNode(const T& element, AdjMultArcNode<U>*& arc = nullptr) : data(element), firstArc(arc) {}
+    ~AdjMultVertexNode()
+    {
+        if(firstArc)
+            delete firstArc;
+        firstArc = nullptr;
+    }
 };
 
 
@@ -85,10 +130,17 @@ public:
         adjacency_list,
         reverse_adjacency_list,
         orthogonal_list,
-        adjacency_multilist
+        //only for undigraph
+        adjacency_multlist
     };
 
-    Graph(Type type, Vector<T>& vertices, Vector<Arc<U>>& arcs)
+    enum class Mode : bool
+    {
+        depth_first_search,
+        broadth_first_search
+    };
+
+    Graph(Type type, Vector<T>& vertices, Vector<Arc<U>>& arcs) : type(type)
     {
         switch (type)
         {
@@ -101,8 +153,116 @@ public:
             case Type::orthogonal_list:
                 createOrthList(vertices, arcs);
                 break;
-            case Type::adjacency_multilist:
+            case Type::adjacency_multlist:
                 createAdjMultList(vertices, arcs);
+                break;
+            default:
+                break;
+        }
+    }
+
+    void access(Mode mode, void(*visit)(T), uint32_t node = 0) const
+    {
+        switch (mode)
+        {
+            case Mode::depth_first_search:
+                switch (type)
+                {
+                    case Type::adjacency_list:
+                        AdjListDFS(visit, node);
+                        break;
+                    case Type::reverse_adjacency_list:
+                        ReAdjListDFS(visit, node);
+                        break;
+                    case Type::orthogonal_list:
+                        OrthListDFS(visit, node);
+                        break;
+                    case Type::adjacency_multlist:
+                        AdjMultListDFS(visit, node);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case Mode::broadth_first_search:
+                switch (type)
+                {
+                    case Type::adjacency_list:
+                        AdjListBFS(visit, node);
+                        break;
+                    case Type::reverse_adjacency_list:
+                        ReAdjListBFS(visit, node);
+                        break;
+                    case Type::orthogonal_list:
+                        OrthListBFS(visit, node);
+                        break;
+                    case Type::adjacency_multlist:
+                        AdjMultListBFS(visit, node);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    void reset(Type type, Vector<T>& vertices, Vector<Arc<U>>& arcs)
+    {
+        switch (this->type)
+        {
+            case Type::adjacency_list:
+                destroyAdjList();
+                break;
+            case Type::reverse_adjacency_list:
+                destroyReAdjList();
+                break;
+            case Type::orthogonal_list:
+                destroyOrthList();
+                break;
+            case Type::adjacency_multlist:
+                destoryAdjMultList();
+                break;
+            default:
+                break;
+        }
+
+        this->type = type;
+        switch (type)
+        {
+            case Type::adjacency_list:
+                createAdjList(vertices, arcs);
+                break;
+            case Type::reverse_adjacency_list:
+                createReAdjList(vertices, arcs);
+                break;
+            case Type::orthogonal_list:
+                createOrthList(vertices, arcs);
+                break;
+            case Type::adjacency_multlist:
+                createAdjMultList(vertices, arcs);
+                break;
+            default:
+                break;
+        }
+    }
+
+    ~Graph()
+    {
+        switch (type)
+        {
+            case Type::adjacency_list:
+                destroyAdjList();
+                break;
+            case Type::reverse_adjacency_list:
+                destroyReAdjList();
+                break;
+            case Type::orthogonal_list:
+                destroyOrthList();
+                break;
+            case Type::adjacency_multlist:
+                destroyAdjMultList();
                 break;
             default:
                 break;
@@ -113,6 +273,7 @@ private:
     Vector<AdjVertexNode<T, U>> reAdjVertices;
     Vector<OrthVertexNode<T, U>> orthVertices;
     Vector<AdjMultVertexNode<T, U>> adjMultVertices;
+    Type type;
 
     void createAdjList(Vector<T>& vertices, Vector<Arc<U>>& arcs)
     {
@@ -244,12 +405,14 @@ private:
                 OrthArcNode<U>* prev = firstIn;
                 firstIn = firstIn->headLink;
                 delete prev;
+                prev = nullptr;
             }
         }
         orthVertices.destory();
     }
 
-    void createAdjMultList(Vector<T>& vertices, Vector<Arc<U>>& arcs)
+    //arcs with two vertices will be treated as an edge, rather than an arc
+    void createAdjMultList(Vector<T>& vertices, Vector<Arc<U>>& edges)
     {
         for (uint32_t i = 0; i < vertices.size(); i++)
         {
@@ -258,10 +421,10 @@ private:
         }
 
         Vector<AdjMultArcNode<U>*> storage(vertices.size());
-        for (uint32_t i = 0; i < arcs.size(); i++)
+        for (uint32_t i = 0; i < edges.size(); i++)
         {
-            uint32_t headIndex = arcs[i].headVertex;
-            uint32_t tailIndex = arcs[i].tailVertex;
+            uint32_t headIndex = edges[i].headVertex;
+            uint32_t tailIndex = edges[i].tailVertex;
             AdjMultArcNode<U>* arcNode = new AdjMultArcNode<U>(headIndex, tailIndex, arcs[i].information);
             if (adjMultVertices[headIndex].firstArc == nullptr)
             {
@@ -287,7 +450,80 @@ private:
         }
     }
 
-    void destoryAdjMultList()
+    void destroyAdjMultList()
+    {
+        for(uint32_t i = 0; i < adjMultVertices.size(); i++)
+        {
+            AdjMultArcNode<U>* arcNode = adjMultVertices[i].firstArc;
+            while(arcNode)
+            {
+                AdjMultArcNode<U>* prev = arcNode;
+                arcNode = arcNode->headLink;
+                delete prev;
+                prev = nullptr;
+            }
+            adjMultVertices.destory();
+        }
+    }
+
+    void AdjListDFS(void(*visit)(T), uint32_t node = 0) const
+    {
+        Vector<uint32_t> judgement(0, adjVertices.size());
+
+        AdjVertexNode<T, U>& access_node = adjVertices[node];
+        AdjArcNode<U>* cur = access_node.firstArc;
+
+        Vector<AdjArcNode<U>*> storage(adjVertices.size());
+        uint32_t order = 0;
+        uint32_t index = node;
+        while(judgement.find(false) != judgement.size())
+        {
+            visit(first_access.data);
+            judgement[index] = order;
+            order++;
+
+            storage[index] = cur->nextArc;
+
+            index = cur->vertexIndex;
+            access_node = adjVertices[index];
+            if(storage[index] == nullptr)
+                cur = access_node.firstArc;
+            else
+                cur = storage[index]->nextArc;
+        }
+    }
+
+    void AdjListBFS(void(*visit)(T), uint32_t node = 0) const
+    {
+
+    }
+
+    void ReAdjListDFS(void(*visit)(T), uint32_t node = 0) const
+    {
+
+    }
+
+    void ReAdjListBFS(void(*visit)(T), uint32_t node = 0) const
+    {
+
+    }
+
+    void OrthListDFS(void(*visit)(T), uint32_t node = 0) const
+    {
+
+    }
+
+    void OrthListBFS(void(*visit)(T), uint32_t node = 0) const
+    {
+
+    }
+
+    void AdjMultListDFS(void(*visit)(T), uint32_t node = 0) const
+    {
+
+    }
+
+    void AdjMultListBFS(void(*visit)(T), uint32_t node = 0) const
     {
 
     }

@@ -350,7 +350,6 @@ int compute(int order, int value)
         int p1 = 2 * value;
         while (i <= order)
         {
-            int tmp = p1;
             p1 = 2 * value * p1 - 2 * (i - 1) * p0;
             p0 = p1; 
             i++;

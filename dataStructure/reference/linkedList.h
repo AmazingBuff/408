@@ -208,7 +208,7 @@ Vector<ElemType> printOrdered(LinkedList* head)
 }
 
 //10.
-void devideTow(LinkedList* head, LinkedList* odd, LinkedList* even)
+void divideTow(LinkedList* head, LinkedList* odd, LinkedList* even)
 {
     while(head->next)
     {
@@ -224,7 +224,7 @@ void devideTow(LinkedList* head, LinkedList* odd, LinkedList* even)
 }
 
 //11.
-void devideTowReverse(LinkedList* head, LinkedList* listA, LinkedList* listB)
+void divideTowReverse(LinkedList* head, LinkedList* listA, LinkedList* listB)
 {
     devideTow(head, listA, listB);
     listB = reverseNone(listB);
@@ -473,7 +473,7 @@ LRUCache* Locate(LRUCache* head, ElemType value)
         else
             break;
     }
-    //handle postion relation
+    //handle position relation
     prev->prior->next = prev->next;
     prev->next->prior = prev->prior;
 

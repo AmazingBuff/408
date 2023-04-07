@@ -22,7 +22,7 @@ public:
         return Status::OK;
     }
 
-    //insert a element before the location
+    //insert an element before the location
     Status ListInsert(int location, ElemType element)
     {
         if(location < 0 || location > length)
@@ -57,7 +57,10 @@ public:
         ElemType* locationElement = firstElement + location;
         ElemType* lastElement = firstElement + length - 1;
         while(locationElement < lastElement)
+        {
             *locationElement = *(locationElement + 1);
+            locationElement++;
+        }
         length--;
         return Status::OK;
     }
@@ -90,7 +93,7 @@ public:
 
     //find the first element which satisfy the compare function
     //compare will be like compare(element, value)
-    //return the index if find while -1 if not
+    //return the index if found while -1 if not
     int LookUp(ElemType element, Compare compare)
     {
         for(int i = 0; i < length; i++)
@@ -373,14 +376,14 @@ void rotate(SeqList& list, int k)
 ElemType searchMidNumber(SeqList& list1, SeqList& list2)
 {
     //precise position
-    int midPosition = (list1.Length() + list2.Length()) >> 1 + 1;
+    int midPosition = ((list1.Length() + list2.Length()) >> 1) + 1;
     //index
     int list1Left = 0;
     int list2Left = 0;
     while(midPosition)
     {
         //get the k min number
-        int middle = std::max(midPosition >> 1 - 1, 0);
+        int middle = std::max((midPosition >> 1) - 1, 0);
         int list1Mid = list1Left + middle;
         int list2Mid = list2Left + middle;
         if(list1[list1Mid] >= list2[list2Mid])

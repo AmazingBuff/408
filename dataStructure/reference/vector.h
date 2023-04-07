@@ -7,6 +7,15 @@ private:
     T* data;
     uint32_t space;
     uint32_t length;
+
+    bool is_basic_variable() const
+    {
+        return typeid(T) == typeid(uint32_t) || typeid(T) == typeid(int32_t) ||
+               typeid(T) == typeid(uint8_t) || typeid(T) == typeid(int8_t) ||
+               typeid(T) == typeid(float) || typeid(T) == typeid(double) ||
+               typeid(T) == typeid(bool) || typeid(T) == typeid(char) ||
+               typeid(T) == typeid(uint64_t) || typeid(T) == typeid(int64_t);
+    }
 public:
     Vector(uint32_t size = 0) : space(size > 10 ? size + 8 : 2 * size), length(0)
     {
@@ -15,6 +24,7 @@ public:
         else
         {
             data = new T[space];
+            memset(data, 0, sizeof(T) * space);
             length = space;
         }
     }
@@ -32,7 +42,13 @@ public:
         if (space)
         {
             data = new T[space];
-            memcpy(data, &other[0], sizeof(T) * space);
+            if(is_basic_variable())
+                memcpy(data, &other[0], sizeof(T) * space);
+            else
+            {
+                for(uint32_t i = 0; i < space; i++)
+                    data[i] = first[i];
+            }
         }
         else
             data = nullptr;
@@ -45,7 +61,13 @@ public:
         if (space)
         {
             data = new T[space];
-            memcpy(data, first, sizeof(T) * space);
+            if(is_basic_variable())
+                memcpy(data, first, sizeof(T) * space);
+            else
+            {
+                for(uint32_t i = 0; i < space; i++)
+                    data[i] = first[i];
+            }
         }
         else
             data = nullptr;
@@ -58,8 +80,19 @@ public:
         if (space)
         {
             data = new T[space];
-            memcpy(data, &first[0], sizeof(T) * first.size());
-            memcpy(data + first.size(), &second[0], sizeof(T) * second.size());
+            if(is_basic_variable())
+            {
+                memcpy(data, &first[0], sizeof(T) * first.size());
+                memcpy(data + first.size(), &second[0], sizeof(T) * second.size());
+            }
+            else
+            {
+                uint32_t i = 0;
+                for(; i < first.size(); i++)
+                    data[i] = first[i];
+                for(uint32_t j = 0; j < second.size(); j++)
+                    data[i + j] = second[j];
+            }
         }
         else
             data = nullptr;
@@ -75,6 +108,13 @@ public:
             data[i] = *iterator++;
     }
 
+    Vector(const T& value, uint32_t size = 1) : length(size), space(size)
+    {
+        data = new T[size];
+        for(uint32_t i = 0; i < size; i++)
+            data[i] = value;
+    }
+
     Vector<T>& operator=(const Vector<T>& other)
     {
         if (space)
@@ -84,7 +124,13 @@ public:
         if (space)
         {
             data = new T[space];
-            memcpy(data, &other[0], sizeof(T) * space);
+            if(is_basic_variable())
+                memcpy(data, &other[0], sizeof(T) * space);
+            else
+            {
+                for(uint32_t i = 0; i < space; i++)
+                    data[i] = other[i];
+            }
         }
         else
             data = nullptr;
@@ -137,7 +183,7 @@ public:
         if (full())
         {
             uint32_t newSpace = space > 20 ? space + 8 : 2 * space + 1;
-            increase_capacity(newSpace);
+            reserver(newSpace);
         }
         data[length] = value;
         length++;
@@ -148,7 +194,7 @@ public:
         if (full())
         {
             uint32_t newSpace = space > 20 ? space + 8 : 2 * space + 1;
-            increase_capacity(newSpace);
+            reserver(newSpace);
         }
         data[length] = value;
         length++;
@@ -167,14 +213,10 @@ public:
 
     void resize(uint32_t newSize)
     {
-        T* newData = new T[newSize];
-        if (data)
-            memcpy(newData, data, newSize * sizeof(T));
-        data = newData;
-        space = newSize;
-        if (space > length)
-            memset(data + length, 0, sizeof(T) * (space - length));
-        length = space;
+        if(newSize <= space)
+            length = newSize;
+        else
+            reserver(newSize);
     }
 
     T back() const
@@ -182,7 +224,7 @@ public:
         return data[length - 1];
     }
 
-    T head() const
+    T front() const
     {
         return data[0];
     }
@@ -247,13 +289,18 @@ public:
         space = 0;
     }
 
-    void increase_capacity(uint32_t newSpace)
+    void reserver(uint32_t newSpace)
     {
         T* newData = new T[newSpace];
         if (data)
         {
-            for (uint32_t i = 0; i < length; i++)
-                newData[i] = data[i];
+            if(is_basic_variable())
+                memcpy(newData, data, sizeof(T) * length);
+            else
+            {
+                for (uint32_t i = 0; i < length; i++)
+                    newData[i] = data[i];
+            }
             delete[] data;
         }
         data = newData;
