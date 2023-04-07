@@ -8,12 +8,6 @@ struct AdjArcNode
     AdjArcNode* nextArc = nullptr;
     T information;
     AdjArcNode(const uint32_t& vertex, const T& info = 0) : vertexIndex(vertex), information(info) {}
-    ~AdjArcNode()
-    {
-        if(nextArc)
-            delete nextArc;
-        nextArc = nullptr;
-    }
 };
 
 template<typename T, typename U>
@@ -21,13 +15,8 @@ struct AdjVertexNode
 {
     T data;
     AdjArcNode<U>* firstArc;
-    AdjVertexNode(const T& element, AdjArcNode<U>*& arc = nullptr) : data(element), firstArc(arc) {}
-    ~AdjVertexNode()
-    {
-        if(firstArc)
-            delete firstArc;
-        firstArc = nullptr;
-    }
+    AdjVertexNode() : data(T()), firstArc(nullptr) { }
+    AdjVertexNode(const T& element, AdjArcNode<U>* arc = nullptr) : data(element), firstArc(arc) {}
 };
 
 
@@ -41,15 +30,6 @@ struct OrthArcNode
     OrthArcNode* tailLink = nullptr;
     T information;
     OrthArcNode(const uint32_t& headVertex, const uint32_t& tailVertex, const T& info = 0) : arcHead(headVertex), arcTail(tailVertex), information(info) {}
-    ~OrthArcNode()
-    {
-        if(headLink)
-            delete headLink;
-        if(tailLink)
-            delete tailLink;
-        headLink = nullptr;
-        tailLink = nullptr;
-    }
 };
 
 template<typename T, typename U>
@@ -58,18 +38,9 @@ struct OrthVertexNode
     T data;
     OrthArcNode<U>* firstIn;
     OrthArcNode<U>* firstOut;
-    OrthVertexNode(const T& element) : data(element) {}
-    OrthVertexNode(const T& element, OrthArcNode<U>*& arcIn = nullptr, OrthArcNode<U>*& arcOut = nullptr) 
+    OrthVertexNode() : data(T()), firstIn(nullptr), firstOut(nullptr) { }
+    OrthVertexNode(const T& element, OrthArcNode<U>* arcIn = nullptr, OrthArcNode<U>* arcOut = nullptr) 
     : data(element), firstIn(arcIn), firstOut(arcOut) {}
-    ~OrthVertexNode()
-    {
-        if(firstIn)
-            delete firstIn;
-        if(firstOut)
-            delete firstOut;
-        firstIn = nullptr;
-        firstOut = nullptr;
-    }
 };
 
 
@@ -85,15 +56,6 @@ struct AdjMultArcNode
     T information;
     AdjMultArcNode(const uint32_t& headVertex, const uint32_t& tailVertex, const T& info = 0) 
     : arcHead(headVertex), arcTail(tailVertex), information(info) {}
-    ~AdjMultArcNode()
-    {
-        if(headLink)
-            delete headLink;
-        if(tailLink)
-            delete tailLink;
-        headLink = nullptr;
-        tailLink = nullptr;
-    }
 };
 
 template<typename T, typename U>
@@ -101,13 +63,8 @@ struct AdjMultVertexNode
 {
     T data;
     AdjMultArcNode<U>* firstArc;
-    AdjMultVertexNode(const T& element, AdjMultArcNode<U>*& arc = nullptr) : data(element), firstArc(arc) {}
-    ~AdjMultVertexNode()
-    {
-        if(firstArc)
-            delete firstArc;
-        firstArc = nullptr;
-    }
+    AdjMultVertexNode() : data(T()), firstArc(nullptr) { }
+    AdjMultVertexNode(const T& element, AdjMultArcNode<U>* arc = nullptr) : data(element), firstArc(arc) {}
 };
 
 
@@ -117,11 +74,14 @@ struct Arc
     uint32_t headVertex;
     uint32_t tailVertex;
     T information;
+    Arc() : headVertex(0), tailVertex(0), information(T()) { }
     Arc(const uint32_t& head, const uint32_t& tail, const T& info = 0)
       : headVertex(head), tailVertex(tail), information(info) { }
 };
 
-template<typename T, typename U>
+typedef Arc<uint32_t> ArcWeight;
+
+template<typename T, typename U = uint32_t>
 struct Graph
 {
 public:
