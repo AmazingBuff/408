@@ -7,17 +7,17 @@ void quickSort(T* arr, int left, int right, bool(*compare_lesser)(T,T))
         return;
     int head = left;
     int tail = right;
-    bool swicth_ = true;
+    bool switch_ = true;
     while(head < tail)
     {
-        if(swicth_)
+        if(switch_)
         {
             if(compare_lesser(arr[tail], arr[head]))
             {
                 T tmp = arr[head];
                 arr[head] = arr[tail];
                 arr[tail] = tmp;
-                swicth_ = false;
+                switch_ = false;
                 head++;
             }
             else
@@ -30,7 +30,7 @@ void quickSort(T* arr, int left, int right, bool(*compare_lesser)(T,T))
                 T tmp = arr[head];
                 arr[head] = arr[tail];
                 arr[tail] = tmp;
-                swicth_ = true;
+                switch_ = true;
                 tail--;
             }
             else

@@ -436,7 +436,8 @@ private:
         Vector<AdjArcNode<U>*> storage(adjVertices.size());
         uint32_t order = 0;
         uint32_t index = node;
-        /*while(judgement.find(1) != judgement.size())
+
+        while(true)
         {
             visit(access_node.data);
             judgement[index] = order;
@@ -451,7 +452,7 @@ private:
             else
                 cur = storage[index]->nextArc;
         }
-        */
+        
     }
 
     void AdjListBFS(void(*visit)(T), uint32_t node = 0) const

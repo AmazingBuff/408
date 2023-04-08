@@ -9,7 +9,7 @@ private:
     char* str;
     uint32_t length = 0;
 public:
-    String(uint32_t size = 0) : length(size)
+    explicit String(uint32_t size = 0) : length(size)
     {
         str = new char[size + 1];
         memset(str, 0, sizeof(char) * (size + 1));
@@ -35,7 +35,7 @@ public:
         strcpy(str, &other[0]);
     }
 
-    String(const char* other)
+    explicit String(const char* other)
     {
         length = strlen(other);
         str = new char[length + 1];

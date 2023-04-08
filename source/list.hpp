@@ -5,7 +5,7 @@ struct List
 {
     T data;
     List* next = nullptr;
-    List(T& element) : data(element) { }
+    explicit List(T& element) : data(element) { }
     List() : data(0) { }
 };
 
@@ -33,7 +33,7 @@ public:
             push_back(*iterator++);
     }
 
-    LinkedList(List<T>* list, bool hasHead = false)
+    explicit LinkedList(List<T>* list, bool hasHead = false)
     {
         if(hasHead)
             head = list;
@@ -61,7 +61,8 @@ public:
     void push_back(const T& element)
     {
         length++;
-        List<T>* node = new List<T>(element);
+        auto node = new List<T>(element);
+        assert(node != nullptr);
         tail->next = node;
         tail = node;
     }
@@ -80,7 +81,8 @@ public:
     void push_front(const T& element)
     {
         length++;
-        List<T>* node = new List<T>(element);
+        auto node = new List<T>(element);
+        assert(node != nullptr);
         node->next = head->next;
         head->next = node;
         if(tail == head)
@@ -114,7 +116,8 @@ public:
                 cur = cur->next;
                 pos--;
             }
-            List<T>* node = new List<T>(element);
+            auto node = new List<T>(element);
+            assert(node != nullptr);
             node->next = cur->next;
             cur->next = node;
         }   

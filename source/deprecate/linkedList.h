@@ -8,7 +8,7 @@ enum class Status : int
     ERROR      = 0,
     OK         = 1,
     TRUE       = 1,
-    FLASE      = 0,
+    FALSE      = 0,
     OVER       = -2
 };
 
@@ -18,7 +18,7 @@ struct LinkedList
 {
     ElemType data;
     LinkedList* next = nullptr;
-    LinkedList(ElemType& element) : data(element) { }
+    explicit LinkedList(ElemType& element) : data(element) { }
     LinkedList() : data(-1) { }
 };
 
@@ -34,7 +34,7 @@ struct DLinkedList
     ElemType data;
     DLinkedList* prior = nullptr;
     DLinkedList* next = nullptr;
-    DLinkedList(ElemType& element) : data(element) { }
+    explicit DLinkedList(ElemType& element) : data(element) { }
     DLinkedList() : data(0) { }
 };
 
@@ -271,7 +271,7 @@ LinkedList* deleteSameValue(LinkedList* list)
 LinkedList* mergeTwoOrderedList(LinkedList* list1, LinkedList* list2)
 {
     //merge
-    LinkedList* newHead = new LinkedList;
+    auto newHead = new LinkedList;
     LinkedList* cur = newHead;
     LinkedList* head1 = list1;
     LinkedList* head2 = list2;
@@ -320,7 +320,7 @@ LinkedList* mergeTwoOrderedList(LinkedList* list1, LinkedList* list2)
 //14.
 LinkedList* generateFromPublicNode(LinkedList* head1, LinkedList* head2)
 {
-    LinkedList* newHead = new LinkedList;
+    auto newHead = new LinkedList;
     LinkedList* cur = newHead;
     while(head1->next && head2->next)
     {
@@ -330,7 +330,7 @@ LinkedList* generateFromPublicNode(LinkedList* head1, LinkedList* head2)
             head1 = head1->next;
         else
         {
-            LinkedList* newNode = new LinkedList(head1->next->data);
+            auto newNode = new LinkedList(head1->next->data);
             cur->next = newNode;
             cur = cur->next;
             head1 = head1->next;
@@ -461,7 +461,7 @@ struct LRUCache
     LRUCache* next = nullptr;
     uint32_t frequency = 0;
     LRUCache() : data(0) { }
-    LRUCache(ElemType& element) : data(element) { }
+    explicit LRUCache(ElemType& element) : data(element) { }
 };
 
 LRUCache* Locate(LRUCache* head, ElemType value)
@@ -566,7 +566,7 @@ void deleteRepetitiveNode(LinkedList* head, uint32_t n, uint32_t m)
             delete tmp;
         }
         else
-            storage.emplace(std::make_pair(value, 1));
+            storage.insert(std::make_pair(value, 1));
     }
 }
 
@@ -597,6 +597,7 @@ void changeElement(LinkedList* head)
     LinkedList* last = second;
     while (last->next)
         last = last->next;
+
     reverseList(second);
     second->next = nullptr;
 
@@ -607,7 +608,7 @@ void changeElement(LinkedList* head)
     {
         cur = cur->next;
         prev->next = last;
-        if(!last)
+        if(last != nullptr)
             last = last->next;
         prev->next->next = cur;
         prev = cur;

@@ -1,6 +1,4 @@
-#include"list.hpp"
 #include"stack.hpp"
-#include"vector.hpp"
 
 template<typename T>
 struct CircularQueue
@@ -11,7 +9,7 @@ private:
     uint32_t rear_;
     uint32_t length;
 public:
-    CircularQueue(uint32_t size = 10) : front_(0), rear_(0), length(size)
+    explicit CircularQueue(uint32_t size = 10) : front_(0), rear_(0), length(size)
     {
         data = new T[size];
     }
@@ -21,14 +19,14 @@ public:
         delete[] data;
     }
 
-    void enqueue(T& value)
+    void enqueue(const T& value)
     {
         assert(!full());
         data[rear_] = value;
         rear_ = (rear_ + 1) % length;
     }
 
-    void enqueue(T&& value)
+    void enqueue(const T&& value)
     {
         assert(!full());
         data[rear_] = value;
@@ -93,7 +91,8 @@ public:
 
     void enqueue(T& value)
     {
-        List<T>* newNode = new List<T>(value);
+        auto newNode = new List<T>(value);
+        assert(newNode != nullptr);
         rear_->next = newNode;
         rear_ = newNode;
         length++;
@@ -101,7 +100,8 @@ public:
 
     void enqueue(T&& value)
     {
-        List<T>* newNode = new List<T>(value);
+        auto newNode = new List<T>(value);
+        assert(newNode != nullptr);
         rear_->next = newNode;
         rear_ = newNode;
         length++;
@@ -242,7 +242,7 @@ public:
     {
         if (full())
         {
-            List<T>* newNode = new List<T>;
+            auto newNode = new List<T>;
             newNode->next = rear_->next;
             rear_->data = value;
             rear_->next = newNode;
@@ -261,7 +261,7 @@ public:
     {
         if (full())
         {
-            List<T>* newNode = new List<T>;
+            auto newNode = new List<T>;
             newNode->next = rear_->next;
             rear_->data = value;
             rear_->next = newNode;
@@ -318,11 +318,9 @@ bool match(Vector<char>& brackets)
     matchStack.push(brackets[0]);
     for(uint32_t i = 1; i < brackets.size(); i++)
     {
-        if(matchStack.top() == '(' && brackets[i] == ')')
-            matchStack.pop();
-        else if(matchStack.top() == '[' && brackets[i] == ']')
-            matchStack.pop();
-        else if(matchStack.top() == '{' && brackets[i] == '}')
+        if ((matchStack.top() == '(' && brackets[i] == ')') ||
+            (matchStack.top() == '[' && brackets[i] == ']') ||
+            (matchStack.top() == '{' && brackets[i] == '}'))
             matchStack.pop();
         else
             matchStack.push(brackets[i]);

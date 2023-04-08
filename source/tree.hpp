@@ -1,6 +1,4 @@
 #include"queue.hpp"
-#include"vector.hpp"
-#include"list.hpp"
 
 template<typename T>
 struct TreeNode
@@ -8,8 +6,8 @@ struct TreeNode
     T data = 0;
     TreeNode* left = nullptr;
     TreeNode* right = nullptr;
-    TreeNode(T& element) : data(element) {}
-    TreeNode() {}
+    explicit TreeNode(T& element) : data(element) {}
+    TreeNode() = default;
 };
 
 template<typename T>
@@ -157,7 +155,7 @@ public:
         levelOrder
     };
 
-    BinaryTree() { }
+    BinaryTree() = default;
     ~BinaryTree()
     {
         if (!empty())
@@ -333,7 +331,7 @@ struct ThreadedTreeNode
     Type rightTag = Type::child;
     ThreadedTreeNode* left = nullptr;
     ThreadedTreeNode* right = nullptr;
-    ThreadedTreeNode(T& element) : data(element) { }
+    explicit ThreadedTreeNode(T& element) : data(element) { }
     ThreadedTreeNode() : data(0) { }
 };
 
@@ -357,7 +355,7 @@ private:
     {
         TreeNode<T>* cur = binaryTree.getRoot();
         head = new ThreadedTreeNode<T>;
-        ThreadedTreeNode<T>* root = new ThreadedTreeNode<T>(cur->data);
+        auto root = new ThreadedTreeNode<T>(cur->data);
         head->left = root;
         head->leftTag = ThreadedTreeNode<T>::Type::child;
         head->right = head;
@@ -374,14 +372,14 @@ private:
             if (cur->left)
             {
                 binaryQueue.enqueue(cur->left);
-                ThreadedTreeNode<T>* newNode = new ThreadedTreeNode<T>(cur->left->data);
+                auto newNode = new ThreadedTreeNode<T>(cur->left->data);
                 root->left = newNode;
                 threadedQueue.enqueue(root->left);
             }
             if (cur->right)
             {
                 binaryQueue.enqueue(cur->right);
-                ThreadedTreeNode<T>* newNode = new ThreadedTreeNode<T>(cur->right->data);
+                auto newNode = new ThreadedTreeNode<T>(cur->right->data);
                 root->right = newNode;
                 threadedQueue.enqueue(root->right);
             }
@@ -465,7 +463,7 @@ private:
     {
         TreeNode<T>* cur = binaryTree.getRoot();
         head = new ThreadedTreeNode<T>;
-        ThreadedTreeNode<T>* root = new ThreadedTreeNode<T>(cur->data);
+        auto root = new ThreadedTreeNode<T>(cur->data);
         head->left = root;
         head->leftTag = ThreadedTreeNode<T>::Type::child;
         head->right = head;
@@ -483,7 +481,7 @@ private:
             if (cur->left)
             {
                 binaryQueue.enqueue(cur->left);
-                ThreadedTreeNode<T>* newNode = new ThreadedTreeNode<T>(cur->left->data);
+                auto newNode = new ThreadedTreeNode<T>(cur->left->data);
                 root->left = newNode;
                 threadedQueue.enqueue(root->left);
             }
@@ -491,7 +489,7 @@ private:
             if (cur->right)
             {
                 binaryQueue.enqueue(cur->right);
-                ThreadedTreeNode<T>* newNode = new ThreadedTreeNode<T>(cur->right->data);
+                auto newNode = new ThreadedTreeNode<T>(cur->right->data);
                 root->right = newNode;
                 threadedQueue.enqueue(root->right);
             }
@@ -1002,10 +1000,10 @@ public:
     T data;
     CSTreeNode* firstChild = nullptr;
     CSTreeNode* nextSibling = nullptr;
-    CSTreeNode(T& element) : data(element) {}
+    explicit CSTreeNode(T& element) : data(element) {}
     CSTreeNode() : data(0) {}
 
-    CSTreeNode(const TreeNode<T>* root)
+    explicit CSTreeNode(const TreeNode<T>* root)
     {
         assert(root);
         CSTreeNode* newRoot = transformation(root);
@@ -1020,7 +1018,7 @@ private:
             return nullptr;
         CSTreeNode* left = transformation(root->left);
         CSTreeNode* right = transformation(root->right);
-        CSTreeNode* node = new CSTreeNode(root->data);
+        auto node = new CSTreeNode(root->data);
         node->firstChild = left;
         node->nextSibling = right;
         return node;
@@ -1043,7 +1041,7 @@ template<typename T>
 Tree<T>* generateTree(Vector<T>& levelOrder, Vector<uint32_t>& degree)
 {
     assert(levelOrder.size() == degree.size());
-    Tree<T>* root = new Tree<T>(levelOrder[0], degree[0]);
+    auto root = new Tree<T>(levelOrder[0], degree[0]);
     Queue<Tree<T>*> queue;
     queue.enqueue(root);
     uint32_t count = 1;
@@ -1052,7 +1050,7 @@ Tree<T>* generateTree(Vector<T>& levelOrder, Vector<uint32_t>& degree)
         Tree<T>* cur = queue.front();
         for (uint32_t i = 0; i < cur->children.capacity(); i++)
         {
-            Tree<T>* node = new Tree<T>(levelOrder[count], degree[count]);
+            auto node = new Tree<T>(levelOrder[count], degree[count]);
             queue.enqueue(node);
             cur->children.push_back(node);
             count++;
@@ -1067,7 +1065,7 @@ template<typename T>
 CSTreeNode<T>* transformCS(Tree<T>* root)
 {
     assert(root);
-    CSTreeNode<T>* ret = new CSTreeNode<T>(root->data);
+    auto ret = new CSTreeNode<T>(root->data);
     Queue<Tree<T>*> queue;
     Queue<CSTreeNode<T>*> csQueue;
     queue.enqueue(root);
@@ -1079,7 +1077,7 @@ CSTreeNode<T>* transformCS(Tree<T>* root)
         CSTreeNode<T>* prev = nullptr;
         for (uint32_t i = 0; i < root->children.capacity(); i++)
         {
-            CSTreeNode<T>* node = new CSTreeNode<T>(root->children[i]->data);
+            auto node = new CSTreeNode<T>(root->children[i]->data);
             if (i == 0)
             {
                 prev = node;
@@ -1125,7 +1123,7 @@ template<typename T>
 CSTreeNode<T>* generateFromLevelOrder(Vector<T>& levelOrder, Vector<uint32_t>& degrees)
 {
     assert(levelOrder.size() == degrees.size());
-    CSTreeNode<T>* root = new CSTreeNode<T>(levelOrder[0]);
+    auto root = new CSTreeNode<T>(levelOrder[0]);
     Queue<CSTreeNode<T>*> queue;
     queue.enqueue(root);
     uint32_t count = 1;
@@ -1137,7 +1135,7 @@ CSTreeNode<T>* generateFromLevelOrder(Vector<T>& levelOrder, Vector<uint32_t>& d
         uint32_t degree = degrees[pos];
         for (uint32_t i = 0; i < degree; i++)
         {
-            CSTreeNode<T>* node = new CSTreeNode<T>(levelOrder[count]);
+            auto node = new CSTreeNode<T>(levelOrder[count]);
             if (i == 0)
             {
                 prev = node;
@@ -1163,11 +1161,11 @@ template<typename T>
 struct HuffmanNode
 {
     T data = 0;
-    TreeNode* left = nullptr;
-    TreeNode* right = nullptr;
+    TreeNode<T>* left = nullptr;
+    TreeNode<T>* right = nullptr;
     uint32_t weight = 0;
     HuffmanNode(const T& element, const uint32_t& weight) : data(element), weight(weight) {}
-    HuffmanNode() {}
+    HuffmanNode() = default;
 };
 
 template<typename T>
@@ -1177,7 +1175,7 @@ private:
     HuffmanNode<T>* root = nullptr;
 
 public:
-    HuffmanTree(HuffmanNode<T>* root) : root(root) {}
+    explicit HuffmanTree(HuffmanNode<T>* root) : root(root) {}
 
     Vector<uint32_t> HuffmanCodeTrans() const
     {
@@ -1250,7 +1248,7 @@ public:
 
 
 template<typename T>
-HuffmanNode<T>* createHuffmanTree(LinkedList<T>& values, LinkedList<uint32_t>& weights)
+HuffmanNode<T>* createHuffmanTree(LinkedList<T>& values, LinkedList<uint32_t> weights)
 {
     assert(values.size() == weights.size());
     auto compare_less = [](uint32_t a, uint32_t b)
@@ -1281,7 +1279,7 @@ HuffmanNode<T>* createHuffmanTree(LinkedList<T>& values, LinkedList<uint32_t>& w
         HuffmanNode<T>* rightNode = nullptr;
 
         uint32_t weIndex = preWeight.find(weights[minIndex]);
-        if(weIndex != preWeight.end())
+        if(weIndex != preWeight.size())
         {
             leftNode = prev[weIndex];
             preWeight.pop(weIndex);
@@ -1291,7 +1289,7 @@ HuffmanNode<T>* createHuffmanTree(LinkedList<T>& values, LinkedList<uint32_t>& w
             leftNode = new HuffmanNode<T>(values[minIndex], weights[minIndex]);
         
         weIndex = preWeight.find(weights[min2Index]);
-        if(weIndex != preWeight.end())
+        if(weIndex != preWeight.size())
         {
             rightNode = prev[weIndex];
             preWeight.pop(weIndex);

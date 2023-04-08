@@ -16,7 +16,7 @@ public:
 
     void push(T& value)
     {
-        List<T>* newNode = new List<T>(value);
+        auto newNode = new List<T>(value);
         newNode->next = topPtr;
         topPtr = newNode;
         length++;
@@ -24,7 +24,7 @@ public:
 
     void push(T&& value)
     {
-        List<T>* newNode = new List<T>(value);
+        auto newNode = new List<T>(value);
         newNode->next = topPtr;
         topPtr = newNode;
         length++;
@@ -137,7 +137,7 @@ private:
     T* data;
     bool leftState;
 public:
-    SharedStack(uint32_t initLength = 10, bool leftState = true) : length(initLength),
+    explicit SharedStack(uint32_t initLength = 10, bool leftState = true) : length(initLength),
         leftTop(0), rightTop(initLength - 1), leftState(leftState)
     {
         data = new T[initLength];
@@ -148,9 +148,9 @@ public:
         delete[] data;
     }
 
-    void switchState(bool leftState)
+    void switchState(bool is_left)
     {
-        this->leftState = leftState;
+        this->leftState = is_left;
     }
 
     void push(T& value)

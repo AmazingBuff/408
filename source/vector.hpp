@@ -3,6 +3,7 @@
 #include<cassert>
 #include<initializer_list>
 #include<cstdint>
+#include<algorithm>
 
 template<typename T>
 struct Vector
@@ -21,7 +22,7 @@ private:
                typeid(T) == typeid(uint64_t) || typeid(T) == typeid(int64_t);
     }
 public:
-    Vector(uint32_t size = 0) : space(size > 10 ? size + 8 : 2 * size), length(0)
+    explicit Vector(uint32_t size = 0) : space(size > 10 ? size + 8 : 2 * size), length(0)
     {
         if (size == 0)
             data = nullptr;
@@ -112,7 +113,7 @@ public:
             data[i] = *iterator++;
     }
 
-    Vector(const T& value, uint32_t size = 1) : length(size), space(size)
+    explicit Vector(const T& value, uint32_t size = 1) : length(size), space(size)
     {
         data = new T[size];
         for(uint32_t i = 0; i < size; i++)
@@ -121,6 +122,8 @@ public:
 
     Vector<T>& operator=(const Vector<T>& other)
     {
+        if(this == &other)
+            return *this;
         if (space)
             delete[] data;
         space = other.capacity();
@@ -187,7 +190,7 @@ public:
         if (full())
         {
             uint32_t newSpace = space > 20 ? space + 8 : 2 * space + 1;
-            reserver(newSpace);
+            reserve(newSpace);
         }
         data[length] = value;
         length++;
@@ -198,7 +201,7 @@ public:
         if (full())
         {
             uint32_t newSpace = space > 20 ? space + 8 : 2 * space + 1;
-            reserver(newSpace);
+            reserve(newSpace);
         }
         data[length] = value;
         length++;
@@ -220,7 +223,7 @@ public:
         if(newSize <= space)
             length = newSize;
         else
-            reserver(newSize);
+            reserve(newSize);
     }
 
     T back() const
@@ -285,7 +288,7 @@ public:
         return space;
     }
 
-    void destory()
+    void destroy()
     {
         delete[] data;
         data = nullptr;
@@ -293,7 +296,7 @@ public:
         space = 0;
     }
 
-    void reserver(uint32_t newSpace)
+    void reserve(uint32_t newSpace)
     {
         T* newData = new T[newSpace];
         if (data)

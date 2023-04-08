@@ -1,8 +1,10 @@
 #include<iostream>
 #include<functional>
-#include<assert.h>
+#include<cassert>
 #include<cstring>
 #include<cstdlib>
+#include<unordered_map>
+#include<vector>
 
 using ElemType = int;
 
@@ -11,7 +13,7 @@ enum class Status : int
     ERROR      = 0,
     OK         = 1,
     TRUE       = 1,
-    FLASE      = 0,
+    FALSE      = 0,
     OVER       = -2
 };
 
@@ -48,7 +50,7 @@ public:
             return Status::ERROR;
         if(length >= listSize)
         {
-            ElemType* newBase = (ElemType*)realloc(firstElement, (listSize + LISTINCREMENT) * sizeof(ElemType));
+            auto newBase = (ElemType*)realloc(firstElement, (listSize + LISTINCREMENT) * sizeof(ElemType));
             if(!newBase)
                 exit(static_cast<int>(Status::ERROR));
             firstElement = newBase;
@@ -98,7 +100,7 @@ public:
     {
         if(length >= listSize)
         {
-            ElemType* newBase = (ElemType*)realloc(firstElement, (listSize + LISTINCREMENT) * sizeof(ElemType));
+            auto newBase = (ElemType*)realloc(firstElement, (listSize + LISTINCREMENT) * sizeof(ElemType));
             if(!newBase)
                 exit(static_cast<int>(Status::ERROR));
             firstElement = newBase;
@@ -113,7 +115,7 @@ public:
     //find the first element which satisfy the compare function
     //compare will be like compare(element, value)
     //return the index if found while -1 if not
-    int LookUp(ElemType element, Compare compare)
+    int LookUp(ElemType element, const Compare& compare)
     {
         for(int i = 0; i < length; i++)
         {
@@ -195,6 +197,8 @@ void reverse(SeqList& list, int left, int right)
         ElemType tmp = list[right];
         list[right] = list[left];
         list[left] = tmp;
+        left++;
+        right--;
     }
 }
 
@@ -262,6 +266,7 @@ Status deleteOrderedZone(SeqList& list, ElemType lower, ElemType upper)
     int nums = upIndex - lowIndex + 1;
     while(nums--)
         list.PopBack();
+    return Status::OK;
 }
 
 //5. ElemType = int
@@ -288,6 +293,7 @@ Status deleteZone(SeqList& list, ElemType lower, ElemType upper)
     int nums = fast - slow;
     while(nums--)
         list.PopBack();
+    return Status::OK;
 }
 
 //6. ElemType = int
@@ -315,7 +321,7 @@ void deleteRepetitive(SeqList& list)
 //7. ElemType = int
 SeqList mergeOrderedList(SeqList& list1, SeqList& list2)
 {
-    SeqList out;
+    SeqList out{};
     out.InitList();
 
     int head1 = 0;
@@ -424,7 +430,7 @@ int getMainElement(SeqList& list)
         else
         {
             if(hash.empty())
-                hash.emplace(std::make_pair(i, 1));
+                hash.insert(std::make_pair(i, 1));
             else
                 hash.begin()->second--;
             if(hash.begin()->second == 0)
