@@ -20,12 +20,16 @@ public:
     LinkedList()
     {
         head = new List<T>;
+        tail = new List<T>;
+        head->next = tail;
         tail = head;
     }
 
     LinkedList(const std::initializer_list<T>& list)
     {
         head = new List<T>;
+        tail = new List<T>;
+        head->next = tail;
         tail = head;
         length = list.size();
         auto iterator = list.begin();
@@ -49,29 +53,34 @@ public:
             length++;
         }
         tail = cur;
+        tail->next = new List<T>;
     }
 
     ~LinkedList()
     {
         if(length)
             destroy();
+        delete tail->next;
         delete head;
+        tail = nullptr;
+        head = nullptr;
     }
 
     void push_back(const T& element)
     {
         length++;
-        auto node = new List<T>(element);
+        tail->next->data = element;
+        tail = tail->next;
+        auto node = new List<T>;
         assert(node != nullptr);
         tail->next = node;
-        tail = node;
     }
 
     void pop_back()
     {
-        assert(length);
+        assert(length > 0);
         length--;
-        delete tail;
+        delete tail->next;
         List<T>* cur = head;
         for(uint32_t i = 0; i < length; i++)
             cur = cur->next;
@@ -91,7 +100,7 @@ public:
 
     void pop_front()
     {
-        assert(length);
+        assert(length > 0);
         length--;
         List<T>* node = head->next;
         head->next = node->next;
@@ -149,7 +158,7 @@ public:
     {
         List<T>* cur = head->next;
         uint32_t index = 0;
-        while(cur)
+        while(cur != tail->next)
         {
             if(cur->data == value)
                 return index;
@@ -165,7 +174,7 @@ public:
     bool count(const T& value) const
     {
         List<T>* cur = head->next;
-        while(cur)
+        while(cur != tail->next)
         {
             if(cur->data == value)
                 return true;
@@ -265,11 +274,11 @@ public:
 
     List<T>* end()
     {
-        return tail;
+        return tail->next;
     }
 
     const List<T>* cend() const
     {
-        return tail;
+        return tail->next;
     }
 };

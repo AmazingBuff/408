@@ -7,7 +7,16 @@ struct HashNode
     Ty_Key key;
     Ty_Val value;
     HashNode() { memset(this, 0, sizeof(HashNode<Ty_Key, Ty_Val>)); }
-    HashNode(const Ty_Val& key, const Ty_Val val) : key(key), value(val) {}
+    HashNode(const Ty_Key& key, const Ty_Val val) : key(key), value(val) {}
+    bool operator==(const HashNode& other) const
+    {
+        return key == other.key && value == other.value;
+    }
+
+    bool operator!=(const HashNode& other) const
+    {
+        return key != other.key || value != other.value;
+    }
 };
 
 template<typename Ty_Key>
@@ -34,39 +43,54 @@ struct HashMap
 public:
     struct Iterator
     {
+        using pointer = HashNode<Ty_Key, Ty_Val>*;
+        using hash_table = HashMap<Ty_Key, Ty_Val, Hash, Pred>*;
     public:
-        Iterator(const Ty_Key& key) : key(key) { }
+        Iterator(pointer ptr, hash_table hash) : ptr(ptr), hash(hash) { }
+        Iterator() : ptr(nullptr), hash(nullptr) { }
         Iterator(const Iterator& other)
         {
-            key = other.key;
+            ptr = other.ptr;
+            hash = other.hash;
         }
 
-        Iterator operator=(const Iterator& other)
+        Iterator& operator=(const Iterator& other)
         {
-            key = other.key;
+            ptr = other.ptr;
+            hash = other.hash;
             return *this;
+        }
+
+        HashNode<Ty_Key, Ty_Val>& operator*() const
+        {
+            return *ptr;
+        }
+
+        HashNode<Ty_Key, Ty_Val>* operator->() const
+        {
+            return ptr;
         }
 
         Iterator& operator++()
         {
-            uint32_t index = hashFunction(key);
-            List<HashNode<Ty_Key, Ty_Val>*>* node = buckets[index].begin();
-            while (node)
+            uint32_t index = hash->hashFunction(ptr->key);
+            List<HashNode<Ty_Key, Ty_Val>*>* node = hash->buckets[index].begin();
+            while (node != hash->buckets[index].end())
             {
-                if (Pred(node->data->key, key))
+                if (Pred()(node->data->key, ptr->key))
                     break;
                 node = node->next;
             }
 
-            if (node->next)
-                key = node->next->data->key;
+            if (node->next != hash->buckets[index].end())
+                ptr = node->next->data;
             else
             {
-                for (uint32_t i = index + 1; i < size; i++)
+                for (uint32_t i = index + 1; i < hash->capacity; i++)
                 {
-                    if (!buckets[i].empty())
+                    if (!hash->buckets[i].empty())
                     {
-                        key = buckets[i].begin()->data->key;
+                        ptr = hash->buckets[i].begin()->data;
                         break;
                     }
                 }
@@ -74,19 +98,42 @@ public:
             return *this;
         }
 
-        Iterator& operator++(uint32_t)
+        explicit operator bool() const
         {
+            return ptr == pointer() && hash == nullptr;
+        }
+
+        Iterator operator++(int) &
+        {
+            Iterator tmp = *this;
             ++(*this);
-            return *this;
+            return tmp;
+        }
+
+        bool operator!=(const Iterator& other) const
+        {
+            return ptr != other.ptr || hash != other.hash;
+        }
+
+        bool operator==(const Iterator& other) const
+        {
+            return ptr == other.ptr && hash == other.hash;
         }
 
     private:
-        Ty_Key key;
+        pointer ptr;
+        hash_table hash;
     };
 
-    HashMap(const uint32_t& size = 100) : size(size)
+    explicit HashMap(const uint32_t& capacity = 100) : capacity(capacity), length(0)
     {
-        buckets.resize(size);
+        buckets.resize(capacity);
+    }
+
+    ~HashMap()
+    {
+        if(!buckets.empty())
+            buckets.destroy();
     }
 
     void insert(const Ty_Key& key, const Ty_Val& value)
@@ -96,6 +143,7 @@ public:
 
     void erase(const Ty_Key& key)
     {
+        assert(length > 0);
         uint32_t index = hashFunction(key);
         List<HashNode<Ty_Key, Ty_Val>*>* node = buckets[index].begin();
         uint32_t pos = 0;
@@ -104,101 +152,134 @@ public:
             if (Pred()(node->data->key, key))
             {
                 buckets[index].pop(pos);
+                length--;
                 return;
             }
             node = node->next;
             pos++;
         }
-        return;
     }
 
-    Ty_Val& find(const Ty_Key& key)
+    Iterator find(const Ty_Key& key)
     {
         uint32_t index = hashFunction(key);
         List<HashNode<Ty_Key, Ty_Val>*>* node = buckets[index].begin();
-        while (node)
+        while (node != buckets[index].end())
         {
             if (Pred()(node->data->key, key))
-                return Iterator(node->data->key);
+                return Iterator(node->data, this);
             node = node->next;
         }
 
-        return Ty_Val();
+        return end();
+    }
+
+    bool count(const Ty_Key& key)
+    {
+        uint32_t index = hashFunction(key);
+        List<HashNode<Ty_Key, Ty_Val>*>* node = buckets[index].begin();
+        while (node != buckets[index].end())
+        {
+            if (Pred()(node->data->key, key))
+                return true;
+            node = node->next;
+        }
+
+        return false;
     }
 
     const Iterator cend() const
     {
-        for (uint32_t i = size - 1; i < size; i--)
-        {
-             if (!buckets[i].empty())
-                 return Iterator(buckets[i].end()->data->key);
-        }
+        return Iterator(buckets[capacity - 1].end()->data, this);
     }
 
     Iterator end()
     {
-        for (uint32_t i = size - 1; i < size; i--)
-        {
-            if (!buckets[i].empty())
-                return Iterator(buckets[i].end()->data->key);
-        }
-
-        return Iterator(Ty_Key());
+        return Iterator(buckets[capacity - 1].end()->data, this);
     }
 
     const Iterator cbegin() const
     {
-        for (uint32_t i = 0; i < size; i++)
+        for (uint32_t i = 0; i < capacity; i++)
         {
             if (!buckets[i].empty())
-                return Iterator(buckets[i].begin()->data->key);
+                return Iterator(buckets[i].begin()->data, this);
         }
+
+        return Iterator(buckets[0].begin()->data, this);
     }
 
     Iterator begin()
     {
-        for (uint32_t i = 0; i < size; i++)
+        for (uint32_t i = 0; i < capacity; i++)
         {
             if (!buckets[i].empty())
-                return Iterator(buckets[i].begin()->data->key);
+                return Iterator(buckets[i].begin()->data, this);
         }
 
-        return Iterator(Ty_Key());
+        return Iterator(buckets[0].begin()->data, this);
     }
 
     const Ty_Val& operator[](const Ty_Key& key) const
     {
         uint32_t index = hashFunction(key);
         List<HashNode<Ty_Key, Ty_Val>*>* node = buckets[index].begin();
-        while (node)
+        while (node != buckets[index].end())
         {
             if (Pred()(node->data->key, key))
                 return node->data->value;
             node = node->next;
         }
-        return Ty_Val();
+
+        auto hash_node = new HashNode<Ty_Key, Ty_Val>(key, Ty_Val());
+        buckets[index].push_back(hash_node);
+        length++;
+        return hash_node->value;
     }
 
     Ty_Val& operator[](const Ty_Key& key)
     {
         uint32_t index = hashFunction(key);
         List<HashNode<Ty_Key, Ty_Val>*>* node = buckets[index].begin();
-        while (node)
+        while (node != buckets[index].end())
         {
             if (Pred()(node->data->key, key))
                 return node->data->value;
             node = node->next;
         }
-        HashNode<Ty_Key, Ty_Val>* hash_node = new HashNode<Ty_Key, Ty_Val>(key, Ty_Val());
+
+        auto hash_node = new HashNode<Ty_Key, Ty_Val>(key, Ty_Val());
         buckets[index].push_back(hash_node);
+        length++;
         return hash_node->value;
     }
 
+    void destroy()
+    {
+        for(uint32_t i = 0; i < capacity; i++)
+        {
+            if(!buckets[i].empty())
+                buckets[i].destroy();
+        }
+        length = 0;
+    }
+
+    uint32_t size() const
+    {
+        return length;
+    }
+
+    bool empty() const
+    {
+        return length == 0;
+    }
 private:
-    uint32_t size;
+    uint32_t capacity;
+    mutable uint32_t length;
     Vector<LinkedList<HashNode<Ty_Key, Ty_Val>*>> buckets;
+
     uint32_t hashFunction(const Ty_Key& key) const
     {
-        return Hash()(key) % size;
+        return Hash()(key) % capacity;
     }
 };

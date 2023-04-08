@@ -144,7 +144,7 @@ public:
         return *this;
     }
 
-    uint32_t find(T& element) const
+    uint32_t find(const T& element) const
     {
         uint32_t i = 0;
         for (; i < length; i++)
@@ -220,10 +220,9 @@ public:
 
     void resize(uint32_t newSize)
     {
-        if(newSize <= space)
-            length = newSize;
-        else
+        if(newSize > space)
             reserve(newSize);
+        length = newSize;
     }
 
     T back() const

@@ -7,7 +7,7 @@ struct AdjArcNode
     uint32_t vertexIndex;
     AdjArcNode* nextArc = nullptr;
     T information;
-    AdjArcNode(const uint32_t& vertex, const T& info = 0) : vertexIndex(vertex), information(info) {}
+    explicit AdjArcNode(const uint32_t& vertex, const T& info = 0) : vertexIndex(vertex), information(info) {}
 };
 
 template<typename T, typename U>
@@ -16,7 +16,7 @@ struct AdjVertexNode
     T data;
     AdjArcNode<U>* firstArc;
     AdjVertexNode() : data(T()), firstArc(nullptr) { }
-    AdjVertexNode(const T& element, AdjArcNode<U>* arc = nullptr) : data(element), firstArc(arc) {}
+    explicit AdjVertexNode(const T& element, AdjArcNode<U>* arc = nullptr) : data(element), firstArc(arc) {}
 };
 
 
@@ -39,7 +39,7 @@ struct OrthVertexNode
     OrthArcNode<U>* firstIn;
     OrthArcNode<U>* firstOut;
     OrthVertexNode() : data(T()), firstIn(nullptr), firstOut(nullptr) { }
-    OrthVertexNode(const T& element, OrthArcNode<U>* arcIn = nullptr, OrthArcNode<U>* arcOut = nullptr) 
+    explicit OrthVertexNode(const T& element, OrthArcNode<U>* arcIn = nullptr, OrthArcNode<U>* arcOut = nullptr)
     : data(element), firstIn(arcIn), firstOut(arcOut) {}
 };
 
@@ -64,7 +64,7 @@ struct AdjMultVertexNode
     T data;
     AdjMultArcNode<U>* firstArc;
     AdjMultVertexNode() : data(T()), firstArc(nullptr) { }
-    AdjMultVertexNode(const T& element, AdjMultArcNode<U>* arc = nullptr) : data(element), firstArc(arc) {}
+    explicit AdjMultVertexNode(const T& element, AdjMultArcNode<U>* arc = nullptr) : data(element), firstArc(arc) {}
 };
 
 
@@ -100,7 +100,7 @@ public:
         broadth_first_search
     };
 
-    Graph(Type type, Vector<T>& vertices, Vector<Arc<U>>& arcs) : type(type)
+    Graph(Type type_, Vector<T>& vertices, Vector<Arc<U>>& arcs) : type(type_)
     {
         switch (type)
         {
@@ -121,7 +121,7 @@ public:
         }
     }
 
-    void access(Mode mode, void(*visit)(T), uint32_t node = 0) const
+    void access(Mode mode, void(*visit)(T), uint32_t node = 0)
     {
         switch (mode)
         {
@@ -168,7 +168,7 @@ public:
         }
     }
 
-    void reset(Type type, Vector<T>& vertices, Vector<Arc<U>>& arcs)
+    void reset(Type type_, Vector<T>& vertices, Vector<Arc<U>>& arcs)
     {
         switch (this->type)
         {
@@ -188,7 +188,7 @@ public:
                 break;
         }
 
-        this->type = type;
+        this->type = type_;
         switch (type)
         {
             case Type::adjacency_list:
@@ -247,14 +247,15 @@ private:
         for (uint32_t i = 0; i < arcs.size(); i++)
         {
             uint32_t vertexIndex = arcs[i].tailVertex;
+            auto arc_node = new AdjArcNode<U>(arcs[i].headVertex, arcs[i].information);
             if (adjVertices[vertexIndex].firstArc == nullptr)
             {
-                adjVertices[vertexIndex].firstArc = new AdjArcNode<U>(arcs[i].headVertex, arcs[i].information);
+                adjVertices[vertexIndex].firstArc = arc_node;
                 storage[vertexIndex] = adjVertices[vertexIndex].firstArc;
             }
             else
             {
-                storage[vertexIndex]->nextArc = new AdjArcNode<U>(arcs[i].headVertex, arcs[i].information);
+                storage[vertexIndex]->nextArc = arc_node;
                 storage[vertexIndex] = storage[vertexIndex]->nextArc;
             }
         }
@@ -270,9 +271,10 @@ private:
                 AdjArcNode<U>* prev = firstArc;
                 firstArc = firstArc->nextArc;
                 delete prev;
+                prev = nullptr;
             }
         }
-        adjVertices.destory();
+        adjVertices.destroy();
     }
 
     void createReAdjList(Vector<T>& vertices, Vector<Arc<U>>& arcs)
@@ -287,14 +289,15 @@ private:
         for (uint32_t i = 0; i < arcs.size(); i++)
         {
             uint32_t vertexIndex = arcs[i].headVertex;
+            auto arc_node = new AdjArcNode<U>(arcs[i].headVertex, arcs[i].information);
             if (reAdjVertices[vertexIndex].firstArc == nullptr)
             {
-                reAdjVertices[vertexIndex].firstArc = new AdjArcNode<U>(arcs[i].tailVertex, arcs[i].information);
+                reAdjVertices[vertexIndex].firstArc = arc_node;
                 storage[vertexIndex] = reAdjVertices[vertexIndex].firstArc;
             }
             else
             {
-                storage[vertexIndex]->nextArc = new AdjArcNode<U>(arcs[i].tailVertex, arcs[i].information);
+                storage[vertexIndex]->nextArc = arc_node;
                 storage[vertexIndex] = storage[vertexIndex]->nextArc;
             }
         }
@@ -310,9 +313,10 @@ private:
                 AdjArcNode<U>* prev = firstArc;
                 firstArc = firstArc->nextArc;
                 delete prev;
+                prev = nullptr;
             }
         }
-        reAdjVertices.destory();
+        reAdjVertices.destroy();
     }
 
     void createOrthList(Vector<T>& vertices, Vector<Arc<U>>& arcs)
@@ -329,7 +333,7 @@ private:
         {
             uint32_t headIndex = arcs[i].headVertex;
             uint32_t tailIndex = arcs[i].tailVertex;
-            OrthArcNode<U>* arcNode = new OrthArcNode<U>(headIndex, tailIndex, arcs[i].information);
+            auto arcNode = new OrthArcNode<U>(headIndex, tailIndex, arcs[i].information);
             if (orthVertices[headIndex].firstIn == nullptr)
             {
                 orthVertices[headIndex].firstIn = arcNode;
@@ -368,7 +372,7 @@ private:
                 prev = nullptr;
             }
         }
-        orthVertices.destory();
+        orthVertices.destroy();
     }
 
     //arcs with two vertices will be treated as an edge, rather than an arc
@@ -385,7 +389,7 @@ private:
         {
             uint32_t headIndex = edges[i].headVertex;
             uint32_t tailIndex = edges[i].tailVertex;
-            AdjMultArcNode<U>* arcNode = new AdjMultArcNode<U>(headIndex, tailIndex, edges[i].information);
+            auto arcNode = new AdjMultArcNode<U>(headIndex, tailIndex, edges[i].information);
             if (adjMultVertices[headIndex].firstArc == nullptr)
             {
                 adjMultVertices[headIndex].firstArc = arcNode;
@@ -422,37 +426,66 @@ private:
                 delete prev;
                 prev = nullptr;
             }
-            adjMultVertices.destory();
+            adjMultVertices.destroy();
         }
     }
 
-    void AdjListDFS(void(*visit)(T), uint32_t node = 0) const
+    void AdjListRecursive(Vector<uint32_t>& judgement, Vector<AdjArcNode<U>*>& storage, AdjArcNode<U>*& cur, uint32_t order, uint32_t& index)
     {
-        Vector<uint32_t> judgement(0, adjVertices.size());
+        if(order < 1)
+            return;
+        uint32_t next_index = 0;
+        do
+        {
+            next_index = cur->vertexIndex;
+            cur = cur->nextArc;
+        }while(judgement[next_index] != 0 && cur != nullptr);
+
+        if(judgement[next_index] == 0)
+        {
+            if(cur != nullptr)
+                storage[index] = cur;
+            index = next_index;
+        }
+        else
+        {
+            next_index = judgement.find(order - 1);
+            cur = storage[next_index];
+            AdjListRecursive(judgement, storage, cur, order - 1, index);
+        }
+    }
+
+    void AdjListDFS(void(*visit)(T), uint32_t node = 0)
+    {
+        uint32_t count = adjVertices.size();
+        Vector<uint32_t> judgement(0, count);
 
         AdjVertexNode<T, U>& access_node = adjVertices[node];
         AdjArcNode<U>* cur = access_node.firstArc;
 
-        Vector<AdjArcNode<U>*> storage(adjVertices.size());
-        uint32_t order = 0;
-        uint32_t index = node;
+        Vector<AdjArcNode<U>*> storage(count);
+        for(uint32_t i = 0; i < count; i++)
+            storage[i] = adjVertices[i].firstArc;
 
-        while(true)
+        uint32_t order = 1;
+        uint32_t index = node;
+        while(order <= count)
         {
             visit(access_node.data);
             judgement[index] = order;
-            order++;
 
-            storage[index] = cur->nextArc;
+            uint32_t new_index = index;
+            AdjListRecursive(judgement, storage, cur, order, new_index);
 
-            index = cur->vertexIndex;
-            access_node = adjVertices[index];
-            if(storage[index] == nullptr)
-                cur = access_node.firstArc;
+            if(new_index == index)
+                break;
             else
-                cur = storage[index]->nextArc;
+                index = new_index;
+
+            access_node = adjVertices[index];
+            cur = storage[index];
+            order++;
         }
-        
     }
 
     void AdjListBFS(void(*visit)(T), uint32_t node = 0) const
