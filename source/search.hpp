@@ -68,76 +68,55 @@ struct BinarySortTree
     void erase(const Ty_Key& key)
     {
         assert(root != nullptr);
-        if(root->data.key == key)
+        SortTreeNode* prev = root;
+        SortTreeNode* cur = prev;
+        if(root->data.key != key)
+            find_both(key, root, cur, prev);
+
+        if(cur != nullptr && prev != nullptr)
         {
-            if(root->left != nullptr && root->right != nullptr)
+            if(cur->left != nullptr && cur->right != nullptr)
             {
-                SortTreeNode* left_child = root->left;
-                SortTreeNode* right_child = root->right;
-                SortTreeNode* rightest_child = left_child;
+                SortTreeNode* cur_left_child = cur->left;
+                SortTreeNode* cur_right_child = cur->right;
+                SortTreeNode* rightest_child = cur_left_child;
                 //find the rightest node of the left subtree of cur
                 while(rightest_child->right != nullptr)
                     rightest_child = rightest_child->right;
-                delete root;
-                root = left_child;
-                rightest_child->right = right_child;
+
+                if(cur == prev->left)
+                    prev->left = cur_left_child;
+                else if(cur == prev->right)
+                    prev->right = cur_left_child;
+                else
+                    root = cur_left_child;
+                delete cur;
+                cur = nullptr;
+                rightest_child->right = cur_right_child;
             }
-            else if(root->left != nullptr || root->right != nullptr)
+            else if(cur->left != nullptr || cur->right != nullptr)
             {
-                SortTreeNode* child = root->left ? root->left : root->right;
-                delete root;
-                root = child;
+                SortTreeNode* cur_child = cur->left ? cur->left : cur->right;
+
+                if(cur == prev->left)
+                    prev->left = cur_child;
+                else if(cur == prev->right)
+                    prev->right = cur_child;
+                else
+                    root = cur_child;
+                delete cur;
+                cur = nullptr;
             }
             else
             {
-                delete root;
-                root = nullptr;
-            }
-        }
-        else
-        {
-            SortTreeNode* prev = root;
-            SortTreeNode* cur = prev;
-            find_both(key, root, cur, prev);
-
-            if(cur != nullptr && prev != nullptr)
-            {
-                bool left_children = cur == prev->left;
-
-                if(cur->left != nullptr && cur->right != nullptr)
-                {
-                    SortTreeNode* cur_left_child = cur->left;
-                    SortTreeNode* cur_right_child = cur->right;
-                    SortTreeNode* rightest_child = cur_left_child;
-                    //find the rightest node of the left subtree of cur
-                    while(rightest_child->right != nullptr)
-                        rightest_child = rightest_child->right;
-
-                    delete cur;
-
-                    if(left_children)
-                        prev->left = cur_left_child;
-                    else
-                        prev->right = cur_left_child;
-                    rightest_child->right = cur_right_child;
-                }
-                else if(cur->left != nullptr || cur->right != nullptr)
-                {
-                    SortTreeNode* cur_child = cur->left ? cur->left : cur->right;
-                    delete cur;
-                    if(left_children)
-                        prev->left = cur_child;
-                    else
-                        prev->right = cur_child;
-                }
+                if(cur == prev->left)
+                    prev->left = nullptr;
+                else if(cur == prev->right)
+                    prev->right = nullptr;
                 else
-                {
-                    delete cur;
-                    if(left_children)
-                        prev->left = nullptr;
-                    else
-                        prev->right = nullptr;
-                }
+                    root = nullptr;
+                delete cur;
+                cur = nullptr;
             }
         }
     }
@@ -255,12 +234,6 @@ struct AVLTree
         insert(element, root, root);
     }
 
-    void erase(const Ty_Key& key)
-    {
-        assert(root != nullptr);
-        find_min_unbalance_subtree();
-    }
-
     BlanceSortTree* find(const Ty_Key& key) const
     {
         assert(root != nullptr);
@@ -288,6 +261,62 @@ struct AVLTree
                 queue.enqueue(front->right);
             queue.dequeue();
             delete front;
+        }
+    }
+
+    void erase(const Ty_Key& key)
+    {
+        assert(root != nullptr);
+        BlanceSortTree* prev = root;
+        BlanceSortTree* cur = prev;
+        if(root->data.key != key)
+            find_both(key, root, cur, prev);
+
+        if(cur != nullptr && prev != nullptr)
+        {
+            if(cur->left != nullptr && cur->right != nullptr)
+            {
+                BlanceSortTree* cur_left_child = cur->left;
+                BlanceSortTree* cur_right_child = cur->right;
+                BlanceSortTree* rightest_child = cur_left_child;
+                //find the rightest node of the left subtree of cur
+                while(rightest_child->right != nullptr)
+                    rightest_child = rightest_child->right;
+
+                if(cur == prev->left)
+                    prev->left = cur_left_child;
+                else if(cur == prev->right)
+                    prev->right = cur_left_child;
+                else
+                    root = cur_left_child;
+                delete cur;
+                cur = nullptr;
+                rightest_child->right = cur_right_child;
+            }
+            else if(cur->left != nullptr || cur->right != nullptr)
+            {
+                BlanceSortTree* cur_child = cur->left ? cur->left : cur->right;
+
+                if(cur == prev->left)
+                    prev->left = cur_child;
+                else if(cur == prev->right)
+                    prev->right = cur_child;
+                else
+                    root = cur_child;
+                delete cur;
+                cur = nullptr;
+            }
+            else
+            {
+                if(cur == prev->left)
+                    prev->left = nullptr;
+                else if(cur == prev->right)
+                    prev->right = nullptr;
+                else
+                    root = nullptr;
+                delete cur;
+                cur = nullptr;
+            }
         }
     }
 
@@ -334,24 +363,107 @@ private:
     }
 
     //four rotation
-    void right_to_left()
+    void right_to_left(BlanceSortTree* node, BlanceSortTree*& prev)
     {
-
+        BlanceSortTree* node_right = node->right;
+        BlanceSortTree* node_right_left = node_right->left;
+        BlanceSortTree* node_right_left_left = node_right_left->left;
+        BlanceSortTree* node_right_left_right = node_right_left->right;
+        node_right->left = node_right_left_right;
+        node->right = node_right_left_left;
+        node_right_left->left = node;
+        node_right_left->right = node_right;
+        if(node_right_left->balance_factor == 1)
+        {
+            node_right_left->balance_factor = 0;
+            node_right->balance_factor = -1;
+            node->balance_factor = 0;
+        }
+        else if(node_right_left->balance_factor == -1)
+        {
+            node_right_left->balance_factor = 0;
+            node_right->balance_factor = 0;
+            node->balance_factor = 1;
+        }
+        else
+        {
+            node_right->balance_factor = 0;
+            node->balance_factor = 0;
+        }
+        if(node == prev)
+            prev = node_right_left;
+        else if(node == prev->left)
+            prev->left = node_right_left;
+        else
+            prev->right = node_right_left;
     }
 
-    void left_to_right()
+    void left_to_right(BlanceSortTree* node, BlanceSortTree*& prev)
     {
-
+        BlanceSortTree* node_left = node->left;
+        BlanceSortTree* node_left_right = node_left->right;
+        BlanceSortTree* node_left_right_left = node_left_right->left;
+        BlanceSortTree* node_left_right_right = node_left_right->right;
+        node_left->right = node_left_right_left;
+        node->left = node_left_right_right;
+        node_left_right->left = node_left;
+        node_left_right->right = node;
+        if(node_left_right->balance_factor == 1)
+        {
+            node_left_right->balance_factor = 0;
+            node_left->balance_factor = 0;
+            node->balance_factor = -1;
+        }
+        else if(node_left_right->balance_factor == -1)
+        {
+            node_left_right->balance_factor = 0;
+            node_left->balance_factor = 1;
+            node->balance_factor = 0;
+        }
+        else
+        {
+            node_left->balance_factor = 0;
+            node->balance_factor = 0;
+        }
+        if(node == prev)
+            prev = node_left_right;
+        else if(node == prev->left)
+            prev->left = node_left_right;
+        else
+            prev->right = node_left_right;
     }
 
-    void left_to_left()
+    void left_to_left(BlanceSortTree* node, BlanceSortTree*& prev)
     {
 
+        BlanceSortTree* node_left = node->left;
+        BlanceSortTree* node_left_right = node_left->right;
+        node_left->left = node;
+        node_left->balance_factor = 0;
+        node->right = node_left_right;
+        node->balance_factor = 0;
+        if(node == prev)
+            prev = node_left;
+        else if(node == prev->left)
+            prev->left = node_left;
+        else
+            prev->right = node_left;
     }
 
-    void right_to_right()
+    void right_to_right(BlanceSortTree* node, BlanceSortTree*& prev)
     {
-
+        BlanceSortTree* node_right = node->right;
+        BlanceSortTree* node_right_left = node_right->left;
+        node_right->left = node;
+        node_right->balance_factor = 0;
+        node->right = node_right_left;
+        node->balance_factor = 0;
+        if(prev == node)
+            prev = node_right;
+        else if(node == prev->left)
+            prev->left = node_right;
+        else
+            prev->right = node_right;
     }
 
     Info insert(const Hash& element, BlanceSortTree*& node, BlanceSortTree*& prev)
@@ -378,15 +490,23 @@ private:
         else if(Compare()(element.key, node->data.key))
         {
             Info node_left = insert(element, node->left, node);
-            if(node == prev || node_left == Info{0, 0})
+            if(node_left.prev_depth == node_left.cur_depth)
                 return {0, 0};
             else if(node->balance_factor == -2)
             {
-                right_to_left()
+                if(node->right->balance_factor == -1)
+                    right_to_right(node, prev);
+                else if(node->right->balance_factor == 1)
+                    right_to_left(node, prev);
+                return {node_left.cur_depth, node_left.cur_depth};
             }
             else if(node->balance_factor == 2)
             {
-
+                if(node->left->balance_factor == 1)
+                    left_to_left(node, prev);
+                else if(node->left->balance_factor == -1)
+                    left_to_right(node, prev);
+                return {node_left.cur_depth, node_left.cur_depth};
             }
             else
             {
@@ -399,7 +519,7 @@ private:
                     int prev_right = node_prev_depth - prev->balance_factor;
                     prev->balance_factor = node_cur_depth - prev_right;
                 }
-                else
+                else if(node == prev->right)
                 {
                     int prev_left = prev->balance_factor + node_prev_depth;
                     prev->balance_factor = prev_left - node_cur_depth;
@@ -411,8 +531,24 @@ private:
         else
         {
             Info node_right = insert(element, node->right, node);
-            if(node == prev || node_right == Info{0, 0})
+            if(node_right.prev_depth == node_right.cur_depth)
                 return {0, 0};
+            else if(node->balance_factor == -2)
+            {
+                if(node->right->balance_factor == -1)
+                    right_to_right(node, prev);
+                else if(node->right->balance_factor == 1)
+                    right_to_left(node, prev);
+                return {node_right.cur_depth, node_right.cur_depth};
+            }
+            else if(node->balance_factor == 2)
+            {
+                if(node->left->balance_factor == 1)
+                    left_to_left(node, prev);
+                else if(node->left->balance_factor == -1)
+                    left_to_right(node, prev);
+                return {node_right.cur_depth, node_right.cur_depth};
+            }
             else
             {
                 int node_left = node_right.cur_depth + node->balance_factor;
@@ -424,7 +560,7 @@ private:
                     int prev_right = node_prev_depth - prev->balance_factor;
                     prev->balance_factor = node_cur_depth - prev_right;
                 }
-                else
+                else if(node == prev->right)
                 {
                     int prev_left = prev->balance_factor + node_prev_depth;
                     prev->balance_factor = prev_left - node_cur_depth;
