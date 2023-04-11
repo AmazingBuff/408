@@ -2,6 +2,7 @@
 
 #include"tree.hpp"
 #include"hash.hpp"
+#include"stack.hpp"
 
 template<typename T, typename U>
 int binarySearch(U& container, T target)
@@ -267,57 +268,105 @@ struct AVLTree
     void erase(const Ty_Key& key)
     {
         assert(root != nullptr);
+        //with stack
+        Stack<BlanceSortTree*> stack;
         BlanceSortTree* prev = root;
         BlanceSortTree* cur = prev;
-        if(root->data.key != key)
-            find_both(key, root, cur, prev);
-
-        if(cur != nullptr && prev != nullptr)
+        while(true)
         {
-            if(cur->left != nullptr && cur->right != nullptr)
+            if(cur != nullptr)
             {
-                BlanceSortTree* cur_left_child = cur->left;
-                BlanceSortTree* cur_right_child = cur->right;
-                BlanceSortTree* rightest_child = cur_left_child;
-                //find the rightest node of the left subtree of cur
-                while(rightest_child->right != nullptr)
-                    rightest_child = rightest_child->right;
-
-                if(cur == prev->left)
-                    prev->left = cur_left_child;
-                else if(cur == prev->right)
-                    prev->right = cur_left_child;
+                stack.push(cur);
+                if(Pred()(key, cur->data.key))
+                    break;
+                else if(Compare()(key, cur->data.key))
+                    cur = cur->left;
                 else
-                    root = cur_left_child;
-                delete cur;
-                cur = nullptr;
-                rightest_child->right = cur_right_child;
-            }
-            else if(cur->left != nullptr || cur->right != nullptr)
-            {
-                BlanceSortTree* cur_child = cur->left ? cur->left : cur->right;
-
-                if(cur == prev->left)
-                    prev->left = cur_child;
-                else if(cur == prev->right)
-                    prev->right = cur_child;
-                else
-                    root = cur_child;
-                delete cur;
-                cur = nullptr;
+                    cur = cur->right;
             }
             else
             {
-                if(cur == prev->left)
-                    prev->left = nullptr;
-                else if(cur == prev->right)
-                    prev->right = nullptr;
-                else
-                    root = nullptr;
-                delete cur;
-                cur = nullptr;
+                stack.destroy();
+                return;
             }
         }
+
+        //three conditions
+        if(cur->left == nullptr && cur->right == nullptr)
+        {
+            int prev_depth = 1;
+            int cur_depth = 0;
+            BlanceSortTree* deleted = cur;
+            while(!stack.empty())
+            {
+                cur = stack.top();
+                stack.pop();
+                if(stack.empty())
+                {
+                    delete root;
+                    root = nullptr;
+                    return;
+                }
+                else
+                {
+                    prev = stack.top();
+                    if(prev_depth == cur_depth)
+                    {
+                        stack.destroy();
+                        delete deleted;
+                        return;
+                    }
+                    else if(cur->balance_factor == -2)
+                    {
+                        if(cur->right->balance_factor == -1)
+                            right_to_right(cur, prev);
+                        else if(cur->right->balance_factor == 1)
+                            right_to_left(cur, prev);
+                    }
+                    else if(cur->balance_factor == 2)
+                    {
+                        if(cur->left->balance_factor == 1)
+                            left_to_left(cur, prev);
+                        else if(cur->left->balance_factor == -1)
+                            left_to_right(cur, prev);
+                    }
+                    else if(cur == prev->left)
+                    {
+                        int prev_right = prev_depth - prev->balance_factor;
+                        prev->balance_factor = cur_depth - prev_right;
+                        prev_depth = std::max(prev_right, prev_depth) + 1;
+                        cur_depth = std::max(cur_depth, prev_right) + 1;
+                    }
+                    else if(cur == prev->right)
+                    {
+                        int prev_left = prev_depth + prev->balance_factor;
+                        prev->balance_factor = prev_left - cur_depth;
+                        prev_depth = std::max(prev_left, prev_depth) + 1;
+                        cur_depth = std::max(cur_depth, prev_left) + 1;
+                    }
+                }
+            }
+            delete deleted;
+        }
+        else if(cur->left != nullptr && cur->right != nullptr)
+        {
+            //track deleted node's right child
+            BlanceSortTree* cur_left = cur->left;
+            BlanceSortTree* cur_right = cur->right;
+            BlanceSortTree* rightest = cur_left;
+            delete cur;
+            stack.pop();
+            while(rightest->right != nullptr)
+                rightest = rightest->right;
+            rightest->right = cur_right;
+
+            if(cur_right->balance_factor)
+
+            if(stack.empty())
+            prev = stack.top();
+
+        }
+
     }
 
 private:

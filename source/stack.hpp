@@ -10,6 +10,13 @@ private:
 	List<T>* topPtr = nullptr;
 	uint32_t length = 0;
 public:
+    ~Stack()
+    {
+        if(topPtr != nullptr)
+            destroy();
+        topPtr = nullptr;
+    }
+
 	T top() const
 	{
 		assert(!empty());
