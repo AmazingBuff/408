@@ -3,7 +3,6 @@
 #include"tree.hpp"
 #include"hash.hpp"
 #include"stack.hpp"
-#include"iterator.hpp"
 
 template<typename T, typename U>
 int binarySearch(U& container, T target)
@@ -193,29 +192,30 @@ private:
 };
 
 template<typename T>
-struct AVLTreeNode
+struct AVLTreeNodeNoParent
 {
 	int balance_factor = 0;
-	T data = 0;
-	AVLTreeNode* left = nullptr;
-	AVLTreeNode* right = nullptr;
-	explicit AVLTreeNode(const T& element) : data(element) {}
-	AVLTreeNode() = default;
+	T data = T();
+    AVLTreeNodeNoParent* left = nullptr;
+    AVLTreeNodeNoParent* right = nullptr;
+	explicit AVLTreeNodeNoParent(const T& element) : data(element) {}
+    AVLTreeNodeNoParent() = default;
 };
 
 template<typename Ty_Key, typename Ty_Val, typename Compare = CompareLess<Ty_Key>, typename Pred = Equal_To<Ty_Key>>
-struct AVLTree
+struct AVLTreeNoParent
 {
 	using Hash = HashNode<Ty_Key, Ty_Val>;
-	using BlanceSortTree = AVLTreeNode<Hash>;
-
+	using BlanceSortTree = AVLTreeNodeNoParent<Hash>;
+private:
 	BlanceSortTree* root = nullptr;
-
+    BlanceSortTree* head = nullptr;
+public:
     //in order iterator
     struct Iterator
     {
         using pointer = HashNode<Ty_Key, Ty_Val>*;
-        using AVL_Tree = AVLTree<Ty_Key, Ty_Val, Compare, Pred>*;
+        using AVL_Tree = AVLTreeNoParent<Ty_Key, Ty_Val, Compare, Pred>*;
     public:
         Iterator(pointer ptr, AVL_Tree tree) : ptr(ptr), tree(tree) { }
         Iterator() : ptr(nullptr), tree(nullptr) { }
@@ -244,25 +244,54 @@ struct AVLTree
 
         Iterator& operator++()
         {
+            assert(*this != tree->end());
             BlanceSortTree* prev = tree->root;
             BlanceSortTree* cur = prev;
 
-            //find the direct next of cur
             Stack<BlanceSortTree*> stack;
-            uint32_t size = 0;
-
-
-            if(cur->right == nullptr && prev->left == cur)
-                ptr = &prev->data;
-            else
+            while (true)
             {
-                BlanceSortTree* direct_next = cur;
-                while(direct_next->right != nullptr)
-                    direct_next = direct_next->right;
+                stack.push(cur);
+                if (Pred()(ptr->key, cur->data.key))
+                    break;
+                else if (Compare()(ptr->key, cur->data.key))
+                    cur = cur->left;
+                else
+                    cur = cur->right;
+            }
+
+            cur = stack.top();
+            stack.pop();
+
+            //find the direct next of cur
+            if(cur->right != nullptr)
+            {
+                BlanceSortTree* direct_next = cur->right;
                 while(direct_next->left != nullptr)
                     direct_next = direct_next->left;
+
                 ptr = &direct_next->data;
             }
+            else if(!stack.empty())
+            {
+                prev = stack.top();
+                while(prev->left != cur)
+                {
+                    stack.pop();
+                    cur = prev;
+                    if(stack.empty())
+                        break;
+                    prev = stack.top();
+                }
+                if(stack.empty())
+                    ptr = tree->end().ptr;
+                else
+                    ptr = &prev->data;
+            }
+            else
+                ptr = tree->end().ptr;
+
+            stack.destroy();
             return *this;
         }
 
@@ -290,29 +319,24 @@ struct AVLTree
     private:
         pointer ptr;
         AVL_Tree tree;
-
-        void inOrder(BlanceSortTree* cur, BlanceSortTree* next)
-        {
-            if(Pred()(ptr->key, cur->data.key))
-                return;
-
-            inOrder(cur->left, next);
-
-
-            inOrder(cur->right, next);
-        }
     };
 
-	AVLTree() = default;
-	~AVLTree()
+    AVLTreeNoParent()
+    {
+        head = new BlanceSortTree;
+    }
+	~AVLTreeNoParent()
 	{
 		if (root)
 			destroy();
 		root = nullptr;
+        delete head;
+        head = nullptr;
 	}
 
-	AVLTree(const std::initializer_list<Hash>& list)
+    AVLTreeNoParent(const std::initializer_list<Hash>& list)
 	{
+        head = new BlanceSortTree;
 		for (auto iterator = list.begin(); iterator != list.end(); iterator++)
 			insert(*iterator);
 	}
@@ -336,10 +360,7 @@ struct AVLTree
 		find_both(key, root, cur, prev);
 
 		if (cur != nullptr)
-        {
-            Iterator ret(cur->data, this);
-            return ret;
-        }
+            return Iterator(&cur->data, this);
 		else
 			return end();
 	}
@@ -360,6 +381,18 @@ struct AVLTree
         while(cur->left != nullptr)
             cur = cur->left;
         return Iterator(&cur->data, this);
+    }
+
+    Iterator end()
+    {
+        assert(root != nullptr);
+        return Iterator(&head->data, this);
+    }
+
+    Iterator end() const
+    {
+        assert(root != nullptr);
+        return Iterator(&head->data, this);
     }
 
 	void destroy()
@@ -881,4 +914,724 @@ private:
 			}
 		}
 	}
+};
+
+
+template<typename T>
+struct RBTreeNode
+{
+    bool is_red = true;
+    T data = T();
+    RBTreeNode* parent = nullptr;
+    RBTreeNode* left = nullptr;
+    RBTreeNode* right = nullptr;
+    explicit RBTreeNode(const T& element) : data(element) {}
+    RBTreeNode() = default;
+};
+
+template<typename Ty_Key, typename Ty_Val, typename Compare = CompareLess<Ty_Key>, typename Pred = Equal_To<Ty_Key>>
+struct RBTree
+{
+    using Hash = HashNode<Ty_Key, Ty_Val>;
+    using RBTreeNode = RBTreeNode<Hash>;
+private:
+    RBTreeNode* root = nullptr;
+public:
+    //in order iterator
+    struct Iterator
+    {
+        using pointer = HashNode<Ty_Key, Ty_Val>*;
+        using rb_tree = RBTree<Ty_Key, Ty_Val, Compare, Pred>*;
+    public:
+        Iterator(pointer ptr, rb_tree tree) : ptr(ptr), tree(tree) { }
+        Iterator() : ptr(nullptr), tree(nullptr) { }
+        Iterator(const Iterator& other)
+        {
+            ptr = other.ptr;
+            tree = other.tree;
+        }
+
+        Iterator& operator=(const Iterator& other)
+        {
+            ptr = other.ptr;
+            tree = other.tree;
+            return *this;
+        }
+
+        Hash& operator*() const
+        {
+            return *ptr;
+        }
+
+        Hash* operator->() const
+        {
+            return ptr;
+        }
+
+        Iterator& operator++()
+        {
+            assert(*this != tree->end());
+            RBTreeNode* prev = tree->root;
+            RBTreeNode* cur = prev;
+
+            Stack<RBTreeNode*> stack;
+            while (true)
+            {
+                stack.push(cur);
+                if (Pred()(ptr->key, cur->data.key))
+                    break;
+                else if (Compare()(ptr->key, cur->data.key))
+                    cur = cur->left;
+                else
+                    cur = cur->right;
+            }
+
+            cur = stack.top();
+            stack.pop();
+
+            //find the direct next of cur
+            if(cur->right != nullptr)
+            {
+                RBTreeNode* direct_next = cur->right;
+                while(direct_next->left != nullptr)
+                    direct_next = direct_next->left;
+
+                ptr = &direct_next->data;
+            }
+            else if(!stack.empty())
+            {
+                prev = stack.top();
+                while(prev->left != cur)
+                {
+                    stack.pop();
+                    cur = prev;
+                    if(stack.empty())
+                        break;
+                    prev = stack.top();
+                }
+                if(stack.empty())
+                    ptr = tree->end().ptr;
+                else
+                    ptr = &prev->data;
+            }
+            else
+                ptr = tree->end().ptr;
+
+            stack.destroy();
+            return *this;
+        }
+
+        explicit operator bool() const
+        {
+            return ptr != nullptr && tree != nullptr;
+        }
+
+        Iterator operator++(int)&
+        {
+            Iterator tmp = *this;
+            ++(*this);
+            return tmp;
+        }
+
+        bool operator!=(const Iterator& other) const
+        {
+            return ptr != other.ptr || tree != other.tree;
+        }
+
+        bool operator==(const Iterator& other) const
+        {
+            return ptr == other.ptr && tree == other.tree;
+        }
+    private:
+        pointer ptr;
+        rb_tree tree;
+    };
+
+    RBTree() = default;
+    ~RBTree()
+    {
+        if (root)
+            destroy();
+        root = nullptr;
+    }
+
+    RBTree(const std::initializer_list<Hash>& list)
+    {
+        for (auto iterator = list.begin(); iterator != list.end(); iterator++)
+            insert(*iterator);
+    }
+
+    void insert(const Ty_Key& key, const Ty_Val& value)
+    {
+        Hash hash(key, value);
+        insert(hash, root, root);
+    }
+
+    void insert(const Hash& element)
+    {
+        insert(element, root, root);
+    }
+
+    Iterator find(const Ty_Key& key) const
+    {
+        assert(root != nullptr);
+        BlanceSortTree* prev = root;
+        BlanceSortTree* cur = prev;
+        find_both(key, root, cur, prev);
+
+        if (cur != nullptr)
+            return Iterator(&cur->data, this);
+        else
+            return end();
+    }
+
+    Iterator begin()
+    {
+        assert(root != nullptr);
+        BlanceSortTree* cur = root;
+        while(cur->left != nullptr)
+            cur = cur->left;
+        return Iterator(&cur->data, this);
+    }
+
+    Iterator begin() const
+    {
+        assert(root != nullptr);
+        BlanceSortTree* cur = root;
+        while(cur->left != nullptr)
+            cur = cur->left;
+        return Iterator(&cur->data, this);
+    }
+
+    Iterator end()
+    {
+        assert(root != nullptr);
+        return Iterator(&head->data, this);
+    }
+
+    Iterator end() const
+    {
+        assert(root != nullptr);
+        return Iterator(&head->data, this);
+    }
+
+    void destroy()
+    {
+        Queue<BlanceSortTree*> queue;
+        if (root)
+            queue.enqueue(root);
+        while (!queue.empty())
+        {
+            BlanceSortTree* front = queue.front();
+            if (front->left)
+                queue.enqueue(front->left);
+            if (front->right)
+                queue.enqueue(front->right);
+            queue.dequeue();
+            delete front;
+        }
+    }
+
+    void erase(const Ty_Key& key)
+    {
+        assert(root != nullptr);
+        //with stack
+        Stack<BlanceSortTree*> stack;
+        BlanceSortTree* cur = root;
+        while (true)
+        {
+            if (cur != nullptr)
+            {
+                stack.push(cur);
+                if (Pred()(key, cur->data.key))
+                    break;
+                else if (Compare()(key, cur->data.key))
+                    cur = cur->left;
+                else
+                    cur = cur->right;
+            }
+            else
+            {
+                stack.destroy();
+                return;
+            }
+        }
+
+        erase(cur, stack);
+    }
+
+    int height(BlanceSortTree* node)
+    {
+        if (node == nullptr)
+            return 0;
+        int left = refresh(node->left);
+        int right = refresh(node->right);
+        node->balance_factor = left - right;
+        return std::max(left, right) + 1;
+    }
+
+private:
+    struct Info
+    {
+        int prev_depth;
+        int cur_depth;
+        bool operator==(const Info& other) const
+        {
+            return prev_depth == other.prev_depth && cur_depth == other.cur_depth;
+        }
+    };
+
+    void erase(BlanceSortTree* cur, Stack<BlanceSortTree*>& stack)
+    {
+        BlanceSortTree* prev = nullptr;
+        //three conditions
+        if (cur->left == nullptr && cur->right == nullptr)
+        {
+            BlanceSortTree* deleted = cur;
+            stack.pop();
+            BlanceSortTree* deleted_parent = stack.empty() ? nullptr : stack.top();
+            stack.push(cur);
+
+            int prev_depth = 1;
+            int cur_depth = 0;
+            while (true)
+            {
+                cur = stack.top();
+                stack.pop();
+                if (!stack.empty())
+                {
+                    prev = stack.top();
+                    if (cur == prev->left)
+                    {
+                        int prev_right = prev_depth - prev->balance_factor;
+                        prev->balance_factor = cur_depth - prev_right;
+                        prev_depth = std::max(prev_right, prev_depth) + 1;
+                        cur_depth = std::max(cur_depth, prev_right) + 1;
+                    }
+                    else
+                    {
+                        int prev_left = prev_depth + prev->balance_factor;
+                        prev->balance_factor = prev_left - cur_depth;
+                        prev_depth = std::max(prev_left, prev_depth) + 1;
+                        cur_depth = std::max(cur_depth, prev_left) + 1;
+                    }
+
+                    if (cur->balance_factor == -2)
+                    {
+                        if (cur->right->balance_factor == -1)
+                            right_to_right(cur, prev);
+                        else if (cur->right->balance_factor == 1)
+                            right_to_left(cur, prev);
+                    }
+                    else if (cur->balance_factor == 2)
+                    {
+                        if (cur->left->balance_factor == 1)
+                            left_to_left(cur, prev);
+                        else if (cur->left->balance_factor == -1)
+                            left_to_right(cur, prev);
+                    }
+
+                    if (prev_depth == cur_depth)
+                    {
+                        stack.destroy();
+                        if (deleted == deleted_parent->left)
+                            deleted_parent->left = nullptr;
+                        else
+                            deleted_parent->right = nullptr;
+                        delete deleted;
+                        return;
+                    }
+                }
+                else
+                {
+                    if (deleted_parent == nullptr)
+                        root = nullptr;
+                    else if (deleted == deleted_parent->left)
+                        deleted_parent->left = nullptr;
+                    else
+                        deleted_parent->right = nullptr;
+                    delete deleted;
+                    return;
+                }
+            }
+        }
+        else if (cur->left != nullptr && cur->right != nullptr)
+        {
+            //use the second way to delete cur node
+            //exchange deleted node with its direct prev or direct next in order
+            if (cur->balance_factor == 0 || cur->balance_factor == 1)
+            {
+                BlanceSortTree* cur_left_rightest = cur->left;
+                stack.push(cur_left_rightest);
+                while (cur_left_rightest->right != nullptr)
+                {
+                    stack.push(cur_left_rightest->right);
+                    cur_left_rightest = cur_left_rightest->right;
+                }
+
+                //exchange data and invoke erase again
+                Hash tmp = cur->data;
+                cur->data = cur_left_rightest->data;
+                cur_left_rightest->data = tmp;
+                erase(cur_left_rightest, stack);
+            }
+            else
+            {
+                BlanceSortTree* cur_right_leftest = cur->right;
+                stack.push(cur_right_leftest);
+                while (cur_right_leftest->left != nullptr)
+                {
+                    stack.push(cur_right_leftest->left);
+                    cur_right_leftest = cur_right_leftest->left;
+                }
+
+                //exchange data and invoke erase again
+                Hash tmp = cur->data;
+                cur->data = cur_right_leftest->data;
+                cur_right_leftest->data = tmp;
+                erase(cur_right_leftest, stack);
+            }
+        }
+        else if (cur->left != nullptr || cur->right != nullptr)
+        {
+            BlanceSortTree* deleted = cur;
+            stack.pop();
+            BlanceSortTree* deleted_parent = stack.empty() ? nullptr : stack.top();
+            stack.push(cur);
+
+            int prev_depth = 0;
+            int cur_depth = 0;
+            if (cur->left != nullptr)
+            {
+                int prev_left = cur->balance_factor;
+                prev_depth = prev_left + 1;
+                cur_depth = prev_left;
+            }
+            else
+            {
+                int prev_right = -cur->balance_factor;
+                prev_depth = prev_right + 1;
+                cur_depth = prev_right;
+            }
+            while (true)
+            {
+                cur = stack.top();
+                stack.pop();
+                if (!stack.empty())
+                {
+                    prev = stack.top();
+                    if (cur == prev->left)
+                    {
+                        int prev_right = prev_depth - prev->balance_factor;
+                        prev->balance_factor = cur_depth - prev_right;
+                        prev_depth = std::max(prev_right, prev_depth) + 1;
+                        cur_depth = std::max(cur_depth, prev_right) + 1;
+                    }
+                    else
+                    {
+                        int prev_left = prev_depth + prev->balance_factor;
+                        prev->balance_factor = prev_left - cur_depth;
+                        prev_depth = std::max(prev_left, prev_depth) + 1;
+                        cur_depth = std::max(cur_depth, prev_left) + 1;
+                    }
+
+                    if (cur->balance_factor == -2)
+                    {
+                        if (cur->right->balance_factor == -1)
+                            right_to_right(cur, prev);
+                        else if (cur->right->balance_factor == 1)
+                            right_to_left(cur, prev);
+                    }
+                    else if (cur->balance_factor == 2)
+                    {
+                        if (cur->left->balance_factor == 1)
+                            left_to_left(cur, prev);
+                        else if (cur->left->balance_factor == -1)
+                            left_to_right(cur, prev);
+                    }
+
+                    if (prev_depth == cur_depth)
+                    {
+                        stack.destroy();
+                        if (deleted == deleted_parent->left)
+                        {
+                            if (deleted->left != nullptr)
+                                deleted_parent->left = deleted->left;
+                            else
+                                deleted_parent->left = deleted->right;
+                        }
+                        else
+                        {
+                            if (deleted->left != nullptr)
+                                deleted_parent->right = deleted->left;
+                            else
+                                deleted_parent->right = deleted->right;
+                        }
+                        delete deleted;
+                        return;
+                    }
+                }
+                else
+                {
+                    if (deleted_parent == nullptr)
+                    {
+                        if (deleted->left != nullptr)
+                            root = deleted->left;
+                        else
+                            root = deleted->right;
+                    }
+                    else if (deleted == deleted_parent->left)
+                    {
+                        if (deleted->left != nullptr)
+                            deleted_parent->left = deleted->left;
+                        else
+                            deleted_parent->left = deleted->right;
+                    }
+                    else
+                    {
+                        if (deleted->left != nullptr)
+                            deleted_parent->right = deleted->left;
+                        else
+                            deleted_parent->right = deleted->right;
+                    }
+                    delete deleted;
+                    return;
+                }
+            }
+        }
+    }
+
+    void find_both(const Ty_Key& key, BlanceSortTree* node, BlanceSortTree*& cur, BlanceSortTree*& prev) const
+    {
+        if (node == nullptr)
+        {
+            cur = nullptr;
+            prev = nullptr;
+            return;
+        }
+        else if (Pred()(key, node->data.key))
+        {
+            cur = node;
+            return;
+        }
+        else if (Compare()(key, node->data.key))
+        {
+            prev = node;
+            find_both(key, node->left, cur, prev);
+        }
+        else
+        {
+            prev = node;
+            find_both(key, node->right, cur, prev);
+        }
+    }
+
+    //four rotation
+    void right_to_left(BlanceSortTree* node, BlanceSortTree*& prev)
+    {
+        BlanceSortTree* node_right = node->right;
+        BlanceSortTree* node_right_left = node_right->left;
+        BlanceSortTree* node_right_left_left = node_right_left->left;
+        BlanceSortTree* node_right_left_right = node_right_left->right;
+        node_right->left = node_right_left_right;
+        node->right = node_right_left_left;
+        node_right_left->left = node;
+        node_right_left->right = node_right;
+        if (node_right_left->balance_factor == 1)
+        {
+            node_right_left->balance_factor = 0;
+            node_right->balance_factor = -1;
+            node->balance_factor = 0;
+        }
+        else if (node_right_left->balance_factor == -1)
+        {
+            node_right_left->balance_factor = 0;
+            node_right->balance_factor = 0;
+            node->balance_factor = 1;
+        }
+        else
+        {
+            node_right->balance_factor = 0;
+            node->balance_factor = 0;
+        }
+        if (node == prev)
+            prev = node_right_left;
+        else if (node == prev->left)
+            prev->left = node_right_left;
+        else
+            prev->right = node_right_left;
+    }
+
+    void left_to_right(BlanceSortTree* node, BlanceSortTree*& prev)
+    {
+        BlanceSortTree* node_left = node->left;
+        BlanceSortTree* node_left_right = node_left->right;
+        BlanceSortTree* node_left_right_left = node_left_right->left;
+        BlanceSortTree* node_left_right_right = node_left_right->right;
+        node_left->right = node_left_right_left;
+        node->left = node_left_right_right;
+        node_left_right->left = node_left;
+        node_left_right->right = node;
+        if (node_left_right->balance_factor == 1)
+        {
+            node_left_right->balance_factor = 0;
+            node_left->balance_factor = 0;
+            node->balance_factor = -1;
+        }
+        else if (node_left_right->balance_factor == -1)
+        {
+            node_left_right->balance_factor = 0;
+            node_left->balance_factor = 1;
+            node->balance_factor = 0;
+        }
+        else
+        {
+            node_left->balance_factor = 0;
+            node->balance_factor = 0;
+        }
+        if (node == prev)
+            prev = node_left_right;
+        else if (node == prev->left)
+            prev->left = node_left_right;
+        else
+            prev->right = node_left_right;
+    }
+
+    void left_to_left(BlanceSortTree* node, BlanceSortTree*& prev)
+    {
+
+        BlanceSortTree* node_left = node->left;
+        BlanceSortTree* node_left_right = node_left->right;
+        node_left->left = node;
+        node_left->balance_factor = 0;
+        node->right = node_left_right;
+        node->balance_factor = 0;
+        if (node == prev)
+            prev = node_left;
+        else if (node == prev->left)
+            prev->left = node_left;
+        else
+            prev->right = node_left;
+    }
+
+    void right_to_right(BlanceSortTree* node, BlanceSortTree*& prev)
+    {
+        BlanceSortTree* node_right = node->right;
+        BlanceSortTree* node_right_left = node_right->left;
+        node_right->left = node;
+        node_right->balance_factor = 0;
+        node->right = node_right_left;
+        node->balance_factor = 0;
+        if (prev == node)
+            prev = node_right;
+        else if (node == prev->left)
+            prev->left = node_right;
+        else
+            prev->right = node_right;
+    }
+
+    Info insert(const Hash& element, BlanceSortTree*& node, BlanceSortTree*& prev)
+    {
+        if (node == nullptr)
+        {
+            node = new BlanceSortTree(element);
+            if (node == prev)
+                return { 0, 0 };
+            else
+            {
+                if (node == prev->left)
+                    prev->balance_factor += 1;
+                else
+                    prev->balance_factor -= 1;
+                return { 0, 1 };
+            }
+        }
+        else if (Pred()(element.key, node->data.key))
+        {
+            node->data.value = element.value;
+            return { 0, 0 };
+        }
+        else if (Compare()(element.key, node->data.key))
+        {
+            Info node_left = insert(element, node->left, node);
+            if (node_left.prev_depth == node_left.cur_depth)
+                return { 0, 0 };
+            else if (node->balance_factor == -2)
+            {
+                if (node->right->balance_factor == -1)
+                    right_to_right(node, prev);
+                else if (node->right->balance_factor == 1)
+                    right_to_left(node, prev);
+                return { node_left.cur_depth, node_left.cur_depth };
+            }
+            else if (node->balance_factor == 2)
+            {
+                if (node->left->balance_factor == 1)
+                    left_to_left(node, prev);
+                else if (node->left->balance_factor == -1)
+                    left_to_right(node, prev);
+                return { node_left.cur_depth, node_left.cur_depth };
+            }
+            else
+            {
+                int node_right = node_left.cur_depth - node->balance_factor;
+                int node_cur_depth = std::max(node_left.cur_depth, node_right) + 1;
+                int node_prev_depth = std::max(node_left.prev_depth, node_right) + 1;
+
+                if (node == prev->left)
+                {
+                    int prev_right = node_prev_depth - prev->balance_factor;
+                    prev->balance_factor = node_cur_depth - prev_right;
+                }
+                else if (node == prev->right)
+                {
+                    int prev_left = prev->balance_factor + node_prev_depth;
+                    prev->balance_factor = prev_left - node_cur_depth;
+                }
+
+                return { node_prev_depth, node_cur_depth };
+            }
+        }
+        else
+        {
+            Info node_right = insert(element, node->right, node);
+            if (node_right.prev_depth == node_right.cur_depth)
+                return { 0, 0 };
+            else if (node->balance_factor == -2)
+            {
+                if (node->right->balance_factor == -1)
+                    right_to_right(node, prev);
+                else if (node->right->balance_factor == 1)
+                    right_to_left(node, prev);
+                return { node_right.cur_depth, node_right.cur_depth };
+            }
+            else if (node->balance_factor == 2)
+            {
+                if (node->left->balance_factor == 1)
+                    left_to_left(node, prev);
+                else if (node->left->balance_factor == -1)
+                    left_to_right(node, prev);
+                return { node_right.cur_depth, node_right.cur_depth };
+            }
+            else
+            {
+                int node_left = node_right.cur_depth + node->balance_factor;
+                int node_cur_depth = std::max(node_right.cur_depth, node_left) + 1;
+                int node_prev_depth = std::max(node_right.prev_depth, node_left) + 1;
+
+                if (node == prev->left)
+                {
+                    int prev_right = node_prev_depth - prev->balance_factor;
+                    prev->balance_factor = node_cur_depth - prev_right;
+                }
+                else if (node == prev->right)
+                {
+                    int prev_left = prev->balance_factor + node_prev_depth;
+                    prev->balance_factor = prev_left - node_cur_depth;
+                }
+
+                return { node_prev_depth, node_cur_depth };
+            }
+        }
+    }
 };
