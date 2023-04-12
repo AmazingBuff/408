@@ -102,7 +102,7 @@ public:
 
 		explicit operator bool() const
 		{
-			return ptr == pointer() && hash == nullptr;
+			return ptr != nullptr && hash != nullptr;
 		}
 
 		Iterator operator++(int)&
