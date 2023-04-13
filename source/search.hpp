@@ -444,8 +444,8 @@ public:
 	{
 		if (node == nullptr)
 			return 0;
-		int left = refresh(node->left);
-		int right = refresh(node->right);
+		int left = height(node->left);
+		int right = height(node->right);
 		node->balance_factor = left - right;
 		return std::max(left, right) + 1;
 	}
@@ -919,8 +919,8 @@ private:
 
 enum class Color : bool
 {
-	black = 0,
-	red = 1
+	black = false,
+	red = true
 };
 
 template<typename T>
@@ -946,7 +946,7 @@ public:
 	//in order iterator
 	struct Iterator
 	{
-		using pointer = HashNode<Ty_Key, Ty_Val>*;
+		using pointer = RBTreeNode*;
 		using rb_tree = RBTree<Ty_Key, Ty_Val, Compare, Pred>*;
 	public:
 		Iterator(pointer ptr, rb_tree tree) : ptr(ptr), tree(tree) { }
@@ -966,64 +966,30 @@ public:
 
 		Hash& operator*() const
 		{
-			return *ptr;
+			return ptr->data;
 		}
 
 		Hash* operator->() const
 		{
-			return ptr;
+			return &ptr->data;
 		}
 
 		Iterator& operator++()
 		{
 			assert(*this != tree->end());
-			RBTreeNode* prev = tree->root;
-			RBTreeNode* cur = prev;
 
-			Stack<RBTreeNode*> stack;
-			while (true)
-			{
-				stack.push(cur);
-				if (Pred()(ptr->key, cur->data.key))
-					break;
-				else if (Compare()(ptr->key, cur->data.key))
-					cur = cur->left;
-				else
-					cur = cur->right;
-			}
+            if(ptr->right != nullptr)
+            {
+                RBTreeNode* ptr_right = ptr->right;
+                while(ptr_right->left != nullptr)
+                    ptr_right = ptr_right->left;
+                ptr = ptr_right;
+            }
+            else if(ptr == tree->root || ptr == ptr->parent->right)
+                ptr = tree->root->parent;
+            else if(ptr == ptr->parent->left)
+                ptr = ptr->parent;
 
-			cur = stack.top();
-			stack.pop();
-
-			//find the direct next of cur
-			if (cur->right != nullptr)
-			{
-				RBTreeNode* direct_next = cur->right;
-				while (direct_next->left != nullptr)
-					direct_next = direct_next->left;
-
-				ptr = &direct_next->data;
-			}
-			else if (!stack.empty())
-			{
-				prev = stack.top();
-				while (prev->left != cur)
-				{
-					stack.pop();
-					cur = prev;
-					if (stack.empty())
-						break;
-					prev = stack.top();
-				}
-				if (stack.empty())
-					ptr = tree->end().ptr;
-				else
-					ptr = &prev->data;
-			}
-			else
-				ptr = tree->end().ptr;
-
-			stack.destroy();
 			return *this;
 		}
 
@@ -1078,15 +1044,88 @@ public:
 		insert(element, root, root);
 	}
 
+    bool count(const Ty_Key& key) const
+    {
+        assert(root != nullptr);
+        RBTreeNode* cur = root;
+        while (cur != nullptr)
+        {
+            if (Pred()(key, cur->data.key))
+                break;
+            else if (Compare()(key, cur->data.key))
+                cur = cur->left;
+            else
+                cur = cur->right;
+        }
+
+        if (cur != nullptr)
+            return true;
+        else
+            return false;
+    }
+
+    Ty_Val& operator[](const Ty_Key& key)
+    {
+        assert(root != nullptr);
+        RBTreeNode* cur = root;
+        while (cur != nullptr)
+        {
+            if (Pred()(key, cur->data.key))
+                break;
+            else if (Compare()(key, cur->data.key))
+                cur = cur->left;
+            else
+                cur = cur->right;
+        }
+
+        if (cur != nullptr)
+            return cur->data.value;
+        else
+        {
+            insert(key, Ty_Val());
+            return operator[](key);
+        }
+    }
+
+    const Ty_Val& operator[](const Ty_Key& key) const
+    {
+        assert(root != nullptr);
+        RBTreeNode* cur = root;
+        while (cur != nullptr)
+        {
+            if (Pred()(key, cur->data.key))
+                break;
+            else if (Compare()(key, cur->data.key))
+                cur = cur->left;
+            else
+                cur = cur->right;
+        }
+
+        if (cur != nullptr)
+            return cur->data.value;
+        else
+        {
+            insert(key, Ty_Val());
+            return operator[](key);
+        }
+    }
+
 	Iterator find(const Ty_Key& key) const
 	{
 		assert(root != nullptr);
-		BlanceSortTree* prev = root;
-		BlanceSortTree* cur = prev;
-		find_both(key, root, cur, prev);
+        RBTreeNode* cur = root;
+        while (cur != nullptr)
+        {
+            if (Pred()(key, cur->data.key))
+                break;
+            else if (Compare()(key, cur->data.key))
+                cur = cur->left;
+            else
+                cur = cur->right;
+        }
 
 		if (cur != nullptr)
-			return Iterator(&cur->data, this);
+			return Iterator(cur, this);
 		else
 			return end();
 	}
@@ -1094,38 +1133,41 @@ public:
 	Iterator begin()
 	{
 		assert(root != nullptr);
-		BlanceSortTree* cur = root;
+        RBTreeNode* cur = root;
 		while (cur->left != nullptr)
 			cur = cur->left;
-		return Iterator(&cur->data, this);
+		return Iterator(cur, this);
 	}
 
 	Iterator begin() const
 	{
 		assert(root != nullptr);
-		BlanceSortTree* cur = root;
+        RBTreeNode* cur = root;
 		while (cur->left != nullptr)
 			cur = cur->left;
-		return Iterator(&cur->data, this);
+		return Iterator(cur, this);
 	}
 
 	Iterator end()
 	{
 		assert(root != nullptr);
-		return Iterator(&head->data, this);
+		return Iterator(root->parent, this);
 	}
 
 	Iterator end() const
 	{
 		assert(root != nullptr);
-		return Iterator(&head->data, this);
+		return Iterator(root->parent, this);
 	}
 
 	void destroy()
 	{
 		Queue<RBTreeNode*> queue;
 		if (root)
-			queue.enqueue(root);
+        {
+            delete root->parent;
+            queue.enqueue(root);
+        }
 		while (!queue.empty())
 		{
 			RBTreeNode* front = queue.front();
@@ -1161,9 +1203,8 @@ public:
 	{
 		if (node == nullptr)
 			return 0;
-		int left = refresh(node->left);
-		int right = refresh(node->right);
-		node->balance_factor = left - right;
+		int left = height(node->left);
+		int right = height(node->right);
 		return std::max(left, right) + 1;
 	}
 
@@ -1339,31 +1380,6 @@ private:
 				cur->right->color = Color::black;
 			}
 			delete cur;
-		}
-	}
-
-	void find_both(const Ty_Key& key, RBTreeNode* node, RBTreeNode*& cur, RBTreeNode*& prev) const
-	{
-		if (node == nullptr)
-		{
-			cur = nullptr;
-			prev = nullptr;
-			return;
-		}
-		else if (Pred()(key, node->data.key))
-		{
-			cur = node;
-			return;
-		}
-		else if (Compare()(key, node->data.key))
-		{
-			prev = node;
-			find_both(key, node->left, cur, prev);
-		}
-		else
-		{
-			prev = node;
-			find_both(key, node->right, cur, prev);
 		}
 	}
 

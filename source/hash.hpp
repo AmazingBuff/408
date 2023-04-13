@@ -10,6 +10,11 @@ struct HashNode
 	Ty_Val value;
 	HashNode() { memset(this, 0, sizeof(HashNode<Ty_Key, Ty_Val>)); }
 	HashNode(const Ty_Key& key, const Ty_Val val) : key(key), value(val) {}
+    HashNode(const HashNode& other)
+    {
+        key = other.key;
+        value = other.value;
+    }
 	bool operator==(const HashNode& other) const
 	{
 		return key == other.key && value == other.value;
