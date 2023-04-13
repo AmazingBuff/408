@@ -196,10 +196,10 @@ struct AVLTreeNodeNoParent
 {
 	int balance_factor = 0;
 	T data = T();
-    AVLTreeNodeNoParent* left = nullptr;
-    AVLTreeNodeNoParent* right = nullptr;
+	AVLTreeNodeNoParent* left = nullptr;
+	AVLTreeNodeNoParent* right = nullptr;
 	explicit AVLTreeNodeNoParent(const T& element) : data(element) {}
-    AVLTreeNodeNoParent() = default;
+	AVLTreeNodeNoParent() = default;
 };
 
 template<typename Ty_Key, typename Ty_Val, typename Compare = CompareLess<Ty_Key>, typename Pred = Equal_To<Ty_Key>>
@@ -209,134 +209,134 @@ struct AVLTreeNoParent
 	using BlanceSortTree = AVLTreeNodeNoParent<Hash>;
 private:
 	BlanceSortTree* root = nullptr;
-    BlanceSortTree* head = nullptr;
+	BlanceSortTree* head = nullptr;
 public:
-    //in order iterator
-    struct Iterator
-    {
-        using pointer = HashNode<Ty_Key, Ty_Val>*;
-        using AVL_Tree = AVLTreeNoParent<Ty_Key, Ty_Val, Compare, Pred>*;
-    public:
-        Iterator(pointer ptr, AVL_Tree tree) : ptr(ptr), tree(tree) { }
-        Iterator() : ptr(nullptr), tree(nullptr) { }
-        Iterator(const Iterator& other)
-        {
-            ptr = other.ptr;
-            tree = other.tree;
-        }
+	//in order iterator
+	struct Iterator
+	{
+		using pointer = HashNode<Ty_Key, Ty_Val>*;
+		using AVL_Tree = AVLTreeNoParent<Ty_Key, Ty_Val, Compare, Pred>*;
+	public:
+		Iterator(pointer ptr, AVL_Tree tree) : ptr(ptr), tree(tree) { }
+		Iterator() : ptr(nullptr), tree(nullptr) { }
+		Iterator(const Iterator& other)
+		{
+			ptr = other.ptr;
+			tree = other.tree;
+		}
 
-        Iterator& operator=(const Iterator& other)
-        {
-            ptr = other.ptr;
-            tree = other.tree;
-            return *this;
-        }
+		Iterator& operator=(const Iterator& other)
+		{
+			ptr = other.ptr;
+			tree = other.tree;
+			return *this;
+		}
 
-        HashNode<Ty_Key, Ty_Val>& operator*() const
-        {
-            return *ptr;
-        }
+		HashNode<Ty_Key, Ty_Val>& operator*() const
+		{
+			return *ptr;
+		}
 
-        HashNode<Ty_Key, Ty_Val>* operator->() const
-        {
-            return ptr;
-        }
+		HashNode<Ty_Key, Ty_Val>* operator->() const
+		{
+			return ptr;
+		}
 
-        Iterator& operator++()
-        {
-            assert(*this != tree->end());
-            BlanceSortTree* prev = tree->root;
-            BlanceSortTree* cur = prev;
+		Iterator& operator++()
+		{
+			assert(*this != tree->end());
+			BlanceSortTree* prev = tree->root;
+			BlanceSortTree* cur = prev;
 
-            Stack<BlanceSortTree*> stack;
-            while (true)
-            {
-                stack.push(cur);
-                if (Pred()(ptr->key, cur->data.key))
-                    break;
-                else if (Compare()(ptr->key, cur->data.key))
-                    cur = cur->left;
-                else
-                    cur = cur->right;
-            }
+			Stack<BlanceSortTree*> stack;
+			while (true)
+			{
+				stack.push(cur);
+				if (Pred()(ptr->key, cur->data.key))
+					break;
+				else if (Compare()(ptr->key, cur->data.key))
+					cur = cur->left;
+				else
+					cur = cur->right;
+			}
 
-            cur = stack.top();
-            stack.pop();
+			cur = stack.top();
+			stack.pop();
 
-            //find the direct next of cur
-            if(cur->right != nullptr)
-            {
-                BlanceSortTree* direct_next = cur->right;
-                while(direct_next->left != nullptr)
-                    direct_next = direct_next->left;
+			//find the direct next of cur
+			if (cur->right != nullptr)
+			{
+				BlanceSortTree* direct_next = cur->right;
+				while (direct_next->left != nullptr)
+					direct_next = direct_next->left;
 
-                ptr = &direct_next->data;
-            }
-            else if(!stack.empty())
-            {
-                prev = stack.top();
-                while(prev->left != cur)
-                {
-                    stack.pop();
-                    cur = prev;
-                    if(stack.empty())
-                        break;
-                    prev = stack.top();
-                }
-                if(stack.empty())
-                    ptr = tree->end().ptr;
-                else
-                    ptr = &prev->data;
-            }
-            else
-                ptr = tree->end().ptr;
+				ptr = &direct_next->data;
+			}
+			else if (!stack.empty())
+			{
+				prev = stack.top();
+				while (prev->left != cur)
+				{
+					stack.pop();
+					cur = prev;
+					if (stack.empty())
+						break;
+					prev = stack.top();
+				}
+				if (stack.empty())
+					ptr = tree->end().ptr;
+				else
+					ptr = &prev->data;
+			}
+			else
+				ptr = tree->end().ptr;
 
-            stack.destroy();
-            return *this;
-        }
+			stack.destroy();
+			return *this;
+		}
 
-        explicit operator bool() const
-        {
-            return ptr != nullptr && tree != nullptr;
-        }
+		explicit operator bool() const
+		{
+			return ptr != nullptr && tree != nullptr;
+		}
 
-        Iterator operator++(int)&
-        {
-            Iterator tmp = *this;
-            ++(*this);
-            return tmp;
-        }
+		Iterator operator++(int)&
+		{
+			Iterator tmp = *this;
+			++(*this);
+			return tmp;
+		}
 
-        bool operator!=(const Iterator& other) const
-        {
-            return ptr != other.ptr || tree != other.tree;
-        }
+		bool operator!=(const Iterator& other) const
+		{
+			return ptr != other.ptr || tree != other.tree;
+		}
 
-        bool operator==(const Iterator& other) const
-        {
-            return ptr == other.ptr && tree == other.tree;
-        }
-    private:
-        pointer ptr;
-        AVL_Tree tree;
-    };
+		bool operator==(const Iterator& other) const
+		{
+			return ptr == other.ptr && tree == other.tree;
+		}
+	private:
+		pointer ptr;
+		AVL_Tree tree;
+	};
 
-    AVLTreeNoParent()
-    {
-        head = new BlanceSortTree;
-    }
+	AVLTreeNoParent()
+	{
+		head = new BlanceSortTree;
+	}
 	~AVLTreeNoParent()
 	{
 		if (root)
 			destroy();
 		root = nullptr;
-        delete head;
-        head = nullptr;
+		delete head;
+		head = nullptr;
 	}
 
-    AVLTreeNoParent(const std::initializer_list<Hash>& list)
+	AVLTreeNoParent(const std::initializer_list<Hash>& list)
 	{
-        head = new BlanceSortTree;
+		head = new BlanceSortTree;
 		for (auto iterator = list.begin(); iterator != list.end(); iterator++)
 			insert(*iterator);
 	}
@@ -360,40 +360,40 @@ public:
 		find_both(key, root, cur, prev);
 
 		if (cur != nullptr)
-            return Iterator(&cur->data, this);
+			return Iterator(&cur->data, this);
 		else
 			return end();
 	}
 
-    Iterator begin()
-    {
-        assert(root != nullptr);
-        BlanceSortTree* cur = root;
-        while(cur->left != nullptr)
-            cur = cur->left;
-        return Iterator(&cur->data, this);
-    }
+	Iterator begin()
+	{
+		assert(root != nullptr);
+		BlanceSortTree* cur = root;
+		while (cur->left != nullptr)
+			cur = cur->left;
+		return Iterator(&cur->data, this);
+	}
 
-    Iterator begin() const
-    {
-        assert(root != nullptr);
-        BlanceSortTree* cur = root;
-        while(cur->left != nullptr)
-            cur = cur->left;
-        return Iterator(&cur->data, this);
-    }
+	Iterator begin() const
+	{
+		assert(root != nullptr);
+		BlanceSortTree* cur = root;
+		while (cur->left != nullptr)
+			cur = cur->left;
+		return Iterator(&cur->data, this);
+	}
 
-    Iterator end()
-    {
-        assert(root != nullptr);
-        return Iterator(&head->data, this);
-    }
+	Iterator end()
+	{
+		assert(root != nullptr);
+		return Iterator(&head->data, this);
+	}
 
-    Iterator end() const
-    {
-        assert(root != nullptr);
-        return Iterator(&head->data, this);
-    }
+	Iterator end() const
+	{
+		assert(root != nullptr);
+		return Iterator(&head->data, this);
+	}
 
 	void destroy()
 	{
@@ -440,15 +440,15 @@ public:
 		erase(cur, stack);
 	}
 
-    int height(BlanceSortTree* node)
-    {
-        if (node == nullptr)
-            return 0;
-        int left = refresh(node->left);
-        int right = refresh(node->right);
-        node->balance_factor = left - right;
-        return std::max(left, right) + 1;
-    }
+	int height(BlanceSortTree* node)
+	{
+		if (node == nullptr)
+			return 0;
+		int left = refresh(node->left);
+		int right = refresh(node->right);
+		node->balance_factor = left - right;
+		return std::max(left, right) + 1;
+	}
 
 private:
 	struct Info
@@ -496,22 +496,22 @@ private:
 						cur_depth = std::max(cur_depth, prev_left) + 1;
 					}
 
-                    if (cur->balance_factor == -2)
-                    {
-                        if (cur->right->balance_factor == -1)
-                            right_to_right(cur, prev);
-                        else if (cur->right->balance_factor == 1)
-                            right_to_left(cur, prev);
-                    }
-                    else if (cur->balance_factor == 2)
-                    {
-                        if (cur->left->balance_factor == 1)
-                            left_to_left(cur, prev);
-                        else if (cur->left->balance_factor == -1)
-                            left_to_right(cur, prev);
-                    }
+					if (cur->balance_factor == -2)
+					{
+						if (cur->right->balance_factor == -1)
+							right_to_right(cur, prev);
+						else if (cur->right->balance_factor == 1)
+							right_to_left(cur, prev);
+					}
+					else if (cur->balance_factor == 2)
+					{
+						if (cur->left->balance_factor == 1)
+							left_to_left(cur, prev);
+						else if (cur->left->balance_factor == -1)
+							left_to_right(cur, prev);
+					}
 
-                    if (prev_depth == cur_depth)
+					if (prev_depth == cur_depth)
 					{
 						stack.destroy();
 						if (deleted == deleted_parent->left)
@@ -531,7 +531,7 @@ private:
 					else
 						deleted_parent->right = nullptr;
 					delete deleted;
-                    return;
+					return;
 				}
 			}
 		}
@@ -615,20 +615,20 @@ private:
 						cur_depth = std::max(cur_depth, prev_left) + 1;
 					}
 
-                    if (cur->balance_factor == -2)
-                    {
-                        if (cur->right->balance_factor == -1)
-                            right_to_right(cur, prev);
-                        else if (cur->right->balance_factor == 1)
-                            right_to_left(cur, prev);
-                    }
-                    else if (cur->balance_factor == 2)
-                    {
-                        if (cur->left->balance_factor == 1)
-                            left_to_left(cur, prev);
-                        else if (cur->left->balance_factor == -1)
-                            left_to_right(cur, prev);
-                    }
+					if (cur->balance_factor == -2)
+					{
+						if (cur->right->balance_factor == -1)
+							right_to_right(cur, prev);
+						else if (cur->right->balance_factor == 1)
+							right_to_left(cur, prev);
+					}
+					else if (cur->balance_factor == 2)
+					{
+						if (cur->left->balance_factor == 1)
+							left_to_left(cur, prev);
+						else if (cur->left->balance_factor == -1)
+							left_to_right(cur, prev);
+					}
 
 					if (prev_depth == cur_depth)
 					{
@@ -675,36 +675,36 @@ private:
 							deleted_parent->right = deleted->right;
 					}
 					delete deleted;
-                    return;
+					return;
 				}
 			}
 		}
 	}
 
-    void find_both(const Ty_Key& key, BlanceSortTree* node, BlanceSortTree*& cur, BlanceSortTree*& prev) const
-    {
-        if (node == nullptr)
-        {
-            cur = nullptr;
-            prev = nullptr;
-            return;
-        }
-        else if (Pred()(key, node->data.key))
-        {
-            cur = node;
-            return;
-        }
-        else if (Compare()(key, node->data.key))
-        {
-            prev = node;
-            find_both(key, node->left, cur, prev);
-        }
-        else
-        {
-            prev = node;
-            find_both(key, node->right, cur, prev);
-        }
-    }
+	void find_both(const Ty_Key& key, BlanceSortTree* node, BlanceSortTree*& cur, BlanceSortTree*& prev) const
+	{
+		if (node == nullptr)
+		{
+			cur = nullptr;
+			prev = nullptr;
+			return;
+		}
+		else if (Pred()(key, node->data.key))
+		{
+			cur = node;
+			return;
+		}
+		else if (Compare()(key, node->data.key))
+		{
+			prev = node;
+			find_both(key, node->left, cur, prev);
+		}
+		else
+		{
+			prev = node;
+			find_both(key, node->right, cur, prev);
+		}
+	}
 
 	//four rotation
 	void right_to_left(BlanceSortTree* node, BlanceSortTree*& prev)
@@ -917,721 +917,638 @@ private:
 };
 
 
+enum class Color : bool
+{
+	black = 0,
+	red = 1
+};
+
 template<typename T>
 struct RBTreeNode
 {
-    bool is_red = true;
-    T data = T();
-    RBTreeNode* parent = nullptr;
-    RBTreeNode* left = nullptr;
-    RBTreeNode* right = nullptr;
-    explicit RBTreeNode(const T& element) : data(element) {}
-    RBTreeNode() = default;
+	Color color = Color::red;
+	T data = T();
+	RBTreeNode* parent = nullptr;
+	RBTreeNode* left = nullptr;
+	RBTreeNode* right = nullptr;
+	explicit RBTreeNode(const T& element) : data(element) {}
+	RBTreeNode() = default;
 };
 
 template<typename Ty_Key, typename Ty_Val, typename Compare = CompareLess<Ty_Key>, typename Pred = Equal_To<Ty_Key>>
 struct RBTree
 {
-    using Hash = HashNode<Ty_Key, Ty_Val>;
-    using RBTreeNode = RBTreeNode<Hash>;
+	using Hash = HashNode<Ty_Key, Ty_Val>;
+	using RBTreeNode = RBTreeNode<Hash>;
 private:
-    RBTreeNode* root = nullptr;
+	RBTreeNode* root = nullptr;
 public:
-    //in order iterator
-    struct Iterator
-    {
-        using pointer = HashNode<Ty_Key, Ty_Val>*;
-        using rb_tree = RBTree<Ty_Key, Ty_Val, Compare, Pred>*;
-    public:
-        Iterator(pointer ptr, rb_tree tree) : ptr(ptr), tree(tree) { }
-        Iterator() : ptr(nullptr), tree(nullptr) { }
-        Iterator(const Iterator& other)
-        {
-            ptr = other.ptr;
-            tree = other.tree;
-        }
+	//in order iterator
+	struct Iterator
+	{
+		using pointer = HashNode<Ty_Key, Ty_Val>*;
+		using rb_tree = RBTree<Ty_Key, Ty_Val, Compare, Pred>*;
+	public:
+		Iterator(pointer ptr, rb_tree tree) : ptr(ptr), tree(tree) { }
+		Iterator() : ptr(nullptr), tree(nullptr) { }
+		Iterator(const Iterator& other)
+		{
+			ptr = other.ptr;
+			tree = other.tree;
+		}
 
-        Iterator& operator=(const Iterator& other)
-        {
-            ptr = other.ptr;
-            tree = other.tree;
-            return *this;
-        }
+		Iterator& operator=(const Iterator& other)
+		{
+			ptr = other.ptr;
+			tree = other.tree;
+			return *this;
+		}
 
-        Hash& operator*() const
-        {
-            return *ptr;
-        }
+		Hash& operator*() const
+		{
+			return *ptr;
+		}
 
-        Hash* operator->() const
-        {
-            return ptr;
-        }
+		Hash* operator->() const
+		{
+			return ptr;
+		}
 
-        Iterator& operator++()
-        {
-            assert(*this != tree->end());
-            RBTreeNode* prev = tree->root;
-            RBTreeNode* cur = prev;
+		Iterator& operator++()
+		{
+			assert(*this != tree->end());
+			RBTreeNode* prev = tree->root;
+			RBTreeNode* cur = prev;
 
-            Stack<RBTreeNode*> stack;
-            while (true)
-            {
-                stack.push(cur);
-                if (Pred()(ptr->key, cur->data.key))
-                    break;
-                else if (Compare()(ptr->key, cur->data.key))
-                    cur = cur->left;
-                else
-                    cur = cur->right;
-            }
+			Stack<RBTreeNode*> stack;
+			while (true)
+			{
+				stack.push(cur);
+				if (Pred()(ptr->key, cur->data.key))
+					break;
+				else if (Compare()(ptr->key, cur->data.key))
+					cur = cur->left;
+				else
+					cur = cur->right;
+			}
 
-            cur = stack.top();
-            stack.pop();
+			cur = stack.top();
+			stack.pop();
 
-            //find the direct next of cur
-            if(cur->right != nullptr)
-            {
-                RBTreeNode* direct_next = cur->right;
-                while(direct_next->left != nullptr)
-                    direct_next = direct_next->left;
+			//find the direct next of cur
+			if (cur->right != nullptr)
+			{
+				RBTreeNode* direct_next = cur->right;
+				while (direct_next->left != nullptr)
+					direct_next = direct_next->left;
 
-                ptr = &direct_next->data;
-            }
-            else if(!stack.empty())
-            {
-                prev = stack.top();
-                while(prev->left != cur)
-                {
-                    stack.pop();
-                    cur = prev;
-                    if(stack.empty())
-                        break;
-                    prev = stack.top();
-                }
-                if(stack.empty())
-                    ptr = tree->end().ptr;
-                else
-                    ptr = &prev->data;
-            }
-            else
-                ptr = tree->end().ptr;
+				ptr = &direct_next->data;
+			}
+			else if (!stack.empty())
+			{
+				prev = stack.top();
+				while (prev->left != cur)
+				{
+					stack.pop();
+					cur = prev;
+					if (stack.empty())
+						break;
+					prev = stack.top();
+				}
+				if (stack.empty())
+					ptr = tree->end().ptr;
+				else
+					ptr = &prev->data;
+			}
+			else
+				ptr = tree->end().ptr;
 
-            stack.destroy();
-            return *this;
-        }
+			stack.destroy();
+			return *this;
+		}
 
-        explicit operator bool() const
-        {
-            return ptr != nullptr && tree != nullptr;
-        }
+		explicit operator bool() const
+		{
+			return ptr != nullptr && tree != nullptr;
+		}
 
-        Iterator operator++(int)&
-        {
-            Iterator tmp = *this;
-            ++(*this);
-            return tmp;
-        }
+		Iterator operator++(int)&
+		{
+			Iterator tmp = *this;
+			++(*this);
+			return tmp;
+		}
 
-        bool operator!=(const Iterator& other) const
-        {
-            return ptr != other.ptr || tree != other.tree;
-        }
+		bool operator!=(const Iterator& other) const
+		{
+			return ptr != other.ptr || tree != other.tree;
+		}
 
-        bool operator==(const Iterator& other) const
-        {
-            return ptr == other.ptr && tree == other.tree;
-        }
-    private:
-        pointer ptr;
-        rb_tree tree;
-    };
+		bool operator==(const Iterator& other) const
+		{
+			return ptr == other.ptr && tree == other.tree;
+		}
+	private:
+		pointer ptr;
+		rb_tree tree;
+	};
 
-    RBTree() = default;
-    ~RBTree()
-    {
-        if (root)
-            destroy();
-        root = nullptr;
-    }
+	RBTree() = default;
+	~RBTree()
+	{
+		if (root)
+			destroy();
+		root = nullptr;
+	}
 
-    RBTree(const std::initializer_list<Hash>& list)
-    {
-        for (auto iterator = list.begin(); iterator != list.end(); iterator++)
-            insert(*iterator);
-    }
+	RBTree(const std::initializer_list<Hash>& list)
+	{
+		for (auto iterator = list.begin(); iterator != list.end(); iterator++)
+			insert(*iterator);
+	}
 
-    void insert(const Ty_Key& key, const Ty_Val& value)
-    {
-        Hash hash(key, value);
-        insert(hash, root, root);
-    }
+	void insert(const Ty_Key& key, const Ty_Val& value)
+	{
+		Hash hash(key, value);
+		insert(hash, root, root);
+	}
 
-    void insert(const Hash& element)
-    {
-        insert(element, root, root);
-    }
+	void insert(const Hash& element)
+	{
+		insert(element, root, root);
+	}
 
-    Iterator find(const Ty_Key& key) const
-    {
-        assert(root != nullptr);
-        BlanceSortTree* prev = root;
-        BlanceSortTree* cur = prev;
-        find_both(key, root, cur, prev);
+	Iterator find(const Ty_Key& key) const
+	{
+		assert(root != nullptr);
+		BlanceSortTree* prev = root;
+		BlanceSortTree* cur = prev;
+		find_both(key, root, cur, prev);
 
-        if (cur != nullptr)
-            return Iterator(&cur->data, this);
-        else
-            return end();
-    }
+		if (cur != nullptr)
+			return Iterator(&cur->data, this);
+		else
+			return end();
+	}
 
-    Iterator begin()
-    {
-        assert(root != nullptr);
-        BlanceSortTree* cur = root;
-        while(cur->left != nullptr)
-            cur = cur->left;
-        return Iterator(&cur->data, this);
-    }
+	Iterator begin()
+	{
+		assert(root != nullptr);
+		BlanceSortTree* cur = root;
+		while (cur->left != nullptr)
+			cur = cur->left;
+		return Iterator(&cur->data, this);
+	}
 
-    Iterator begin() const
-    {
-        assert(root != nullptr);
-        BlanceSortTree* cur = root;
-        while(cur->left != nullptr)
-            cur = cur->left;
-        return Iterator(&cur->data, this);
-    }
+	Iterator begin() const
+	{
+		assert(root != nullptr);
+		BlanceSortTree* cur = root;
+		while (cur->left != nullptr)
+			cur = cur->left;
+		return Iterator(&cur->data, this);
+	}
 
-    Iterator end()
-    {
-        assert(root != nullptr);
-        return Iterator(&head->data, this);
-    }
+	Iterator end()
+	{
+		assert(root != nullptr);
+		return Iterator(&head->data, this);
+	}
 
-    Iterator end() const
-    {
-        assert(root != nullptr);
-        return Iterator(&head->data, this);
-    }
+	Iterator end() const
+	{
+		assert(root != nullptr);
+		return Iterator(&head->data, this);
+	}
 
-    void destroy()
-    {
-        Queue<BlanceSortTree*> queue;
-        if (root)
-            queue.enqueue(root);
-        while (!queue.empty())
-        {
-            BlanceSortTree* front = queue.front();
-            if (front->left)
-                queue.enqueue(front->left);
-            if (front->right)
-                queue.enqueue(front->right);
-            queue.dequeue();
-            delete front;
-        }
-    }
+	void destroy()
+	{
+		Queue<RBTreeNode*> queue;
+		if (root)
+			queue.enqueue(root);
+		while (!queue.empty())
+		{
+			RBTreeNode* front = queue.front();
+			if (front->left)
+				queue.enqueue(front->left);
+			if (front->right)
+				queue.enqueue(front->right);
+			queue.dequeue();
+			delete front;
+		}
+	}
 
-    void erase(const Ty_Key& key)
-    {
-        assert(root != nullptr);
-        //with stack
-        Stack<BlanceSortTree*> stack;
-        BlanceSortTree* cur = root;
-        while (true)
-        {
-            if (cur != nullptr)
-            {
-                stack.push(cur);
-                if (Pred()(key, cur->data.key))
-                    break;
-                else if (Compare()(key, cur->data.key))
-                    cur = cur->left;
-                else
-                    cur = cur->right;
-            }
-            else
-            {
-                stack.destroy();
-                return;
-            }
-        }
+	void erase(const Ty_Key& key)
+	{
+		assert(root != nullptr);
+		//with stack
+		RBTreeNode* cur = root;
+		while (cur != nullptr)
+		{
+			if (Pred()(key, cur->data.key))
+			{
+				erase(cur);
+				return;
+			}
+			else if (Compare()(key, cur->data.key))
+				cur = cur->left;
+			else
+				cur = cur->right;
+		}
+	}
 
-        erase(cur, stack);
-    }
-
-    int height(BlanceSortTree* node)
-    {
-        if (node == nullptr)
-            return 0;
-        int left = refresh(node->left);
-        int right = refresh(node->right);
-        node->balance_factor = left - right;
-        return std::max(left, right) + 1;
-    }
+	int height(RBTreeNode* node)
+	{
+		if (node == nullptr)
+			return 0;
+		int left = refresh(node->left);
+		int right = refresh(node->right);
+		node->balance_factor = left - right;
+		return std::max(left, right) + 1;
+	}
 
 private:
-    struct Info
-    {
-        int prev_depth;
-        int cur_depth;
-        bool operator==(const Info& other) const
-        {
-            return prev_depth == other.prev_depth && cur_depth == other.cur_depth;
-        }
-    };
+	void erase(RBTreeNode* cur)
+	{
+		//three conditions
+		if (cur->left == nullptr && cur->right == nullptr)
+		{
+			if (cur->color == Color::red)
+			{
+				if (cur == cur->parent->left)
+					cur->parent->left = nullptr;
+				else
+					cur->parent->right = nullptr;
+			}
+			else
+			{
+				RBTreeNode* cur_parent = cur->parent;
+				if (cur == root)
+					root = nullptr;
+				else if (cur == cur_parent->left)
+				{
+					RBTreeNode* cur_parent_right = cur_parent->right;
+					if (cur_parent_right->color == Color::black)
+					{
+						if (cur_parent_right->right == nullptr || cur_parent_right->right->color == Color::black)
+						{
+							if (cur_parent_right->left == nullptr || cur_parent_right->left->color == Color::black)
+							{
+								cur_parent_right->color = Color::red;
+								cur_parent->left = nullptr;
+								while (cur_parent->color != Color::red)
+									cur_parent = cur_parent->parent;
+								cur_parent->color = Color::black;
+							}
+							else
+							{
+								Color tmp = cur_parent_right->color;
+								cur_parent_right->color = cur_parent_right->left->color;
+								cur_parent_right->left->color = tmp;
+								right_rotation(cur_parent_right);
+								//transfer to another condition
+								cur_parent_right = cur_parent->right;
+								tmp = cur_parent->color;
+								cur_parent->color = cur_parent_right->color;
+								cur_parent_right->color = tmp;
+								cur_parent_right->right->color = Color::black;
+								left_rotation(cur_parent);
+								cur_parent->left = nullptr;
+							}
+						}
+						else
+						{
+							Color tmp = cur_parent->color;
+							cur_parent->color = cur_parent_right->color;
+							cur_parent_right->color = tmp;
+							cur_parent_right->right->color = Color::black;
+							left_rotation(cur_parent);
+							cur_parent->left = nullptr;
+						}
+					}
+					else
+					{
+						Color tmp = cur_parent->color;
+						cur_parent->color = cur_parent_right->color;
+						cur_parent_right->color = tmp;
+						erase(cur);
+					}
+				}
+				else if (cur == cur_parent->right)
+				{
+					RBTreeNode* cur_parent_left = cur_parent->left;
+					if (cur_parent_left->color == Color::black)
+					{
+						if (cur_parent_left->left == nullptr || cur_parent_left->left->color == Color::black)
+						{
+							if (cur_parent_left->right == nullptr || cur_parent_left->right->color == Color::black)
+							{
+								cur_parent_left->color = Color::red;
+								cur_parent->right = nullptr;
+								while (cur_parent->color != Color::red)
+									cur_parent = cur_parent->parent;
+								cur_parent->color = Color::black;
+							}
+							else
+							{
+								Color tmp = cur_parent_left->color;
+								cur_parent_left->color = cur_parent_left->right->color;
+								cur_parent_left->right->color = tmp;
+								left_rotation(cur_parent_left);
+								//transfer to another condition
+								cur_parent_left = cur_parent->left;
+								tmp = cur_parent->color;
+								cur_parent->color = cur_parent_left->color;
+								cur_parent_left->color = tmp;
+								cur_parent_left->left->color = Color::black;
+								right_rotation(cur_parent);
+								cur_parent->right = nullptr;
+							}
+						}
+						else
+						{
+							Color tmp = cur_parent->color;
+							cur_parent->color = cur_parent_left->color;
+							cur_parent_left->color = tmp;
+							cur_parent_left->left->color = Color::black;
+							right_rotation(cur_parent);
+							cur_parent->right = nullptr;
+						}
+					}
+					else
+					{
+						Color tmp = cur_parent->color;
+						cur_parent->color = cur_parent_left->color;
+						cur_parent_left->color = tmp;
+						erase(cur);
+					}
+				}
+			}
+			delete cur;
+		}
+		else if (cur->left != nullptr && cur->right != nullptr)
+		{
+			//use the second way to delete cur node
+			//exchange deleted node with its direct prev or direct next in order
+			RBTreeNode* cur_right_leftest = cur->right;
+			while (cur_right_leftest->left != nullptr)
+				cur_right_leftest = cur_right_leftest->left;
 
-    void erase(BlanceSortTree* cur, Stack<BlanceSortTree*>& stack)
-    {
-        BlanceSortTree* prev = nullptr;
-        //three conditions
-        if (cur->left == nullptr && cur->right == nullptr)
-        {
-            BlanceSortTree* deleted = cur;
-            stack.pop();
-            BlanceSortTree* deleted_parent = stack.empty() ? nullptr : stack.top();
-            stack.push(cur);
+			//exchange data and invoke erase again
+			Hash tmp = cur->data;
+			cur->data = cur_right_leftest->data;
+			cur_right_leftest->data = tmp;
+			erase(cur_right_leftest);
+		}
+		else if (cur->left != nullptr)
+		{
+			if (cur == root)
+			{
+				cur->left->parent = cur->parent;
+				cur->left->color = Color::black;
+				root = cur->left;
+			}
+			else
+			{
+				RBTreeNode* cur_parent = cur->parent;
+				if (cur == cur_parent->left)
+					cur_parent->left = cur->left;
+				else
+					cur_parent->right = cur->left;
+				cur->left->parent = cur_parent;
+				cur->left->color = Color::black;
+			}
+			delete cur;
+		}
+		else if (cur->right != nullptr)
+		{
+			if (cur == root)
+			{
+				cur->right->parent = cur->parent;
+				cur->right->color = Color::black;
+				root = cur->right;
+			}
+			else
+			{
+				RBTreeNode* cur_parent = cur->parent;
+				if (cur == cur_parent->left)
+					cur_parent->left = cur->right;
+				else
+					cur_parent->right = cur->right;
+				cur->right->parent = cur_parent;
+				cur->right->color = Color::black;
+			}
+			delete cur;
+		}
+	}
 
-            int prev_depth = 1;
-            int cur_depth = 0;
-            while (true)
-            {
-                cur = stack.top();
-                stack.pop();
-                if (!stack.empty())
-                {
-                    prev = stack.top();
-                    if (cur == prev->left)
-                    {
-                        int prev_right = prev_depth - prev->balance_factor;
-                        prev->balance_factor = cur_depth - prev_right;
-                        prev_depth = std::max(prev_right, prev_depth) + 1;
-                        cur_depth = std::max(cur_depth, prev_right) + 1;
-                    }
-                    else
-                    {
-                        int prev_left = prev_depth + prev->balance_factor;
-                        prev->balance_factor = prev_left - cur_depth;
-                        prev_depth = std::max(prev_left, prev_depth) + 1;
-                        cur_depth = std::max(cur_depth, prev_left) + 1;
-                    }
+	void find_both(const Ty_Key& key, RBTreeNode* node, RBTreeNode*& cur, RBTreeNode*& prev) const
+	{
+		if (node == nullptr)
+		{
+			cur = nullptr;
+			prev = nullptr;
+			return;
+		}
+		else if (Pred()(key, node->data.key))
+		{
+			cur = node;
+			return;
+		}
+		else if (Compare()(key, node->data.key))
+		{
+			prev = node;
+			find_both(key, node->left, cur, prev);
+		}
+		else
+		{
+			prev = node;
+			find_both(key, node->right, cur, prev);
+		}
+	}
 
-                    if (cur->balance_factor == -2)
-                    {
-                        if (cur->right->balance_factor == -1)
-                            right_to_right(cur, prev);
-                        else if (cur->right->balance_factor == 1)
-                            right_to_left(cur, prev);
-                    }
-                    else if (cur->balance_factor == 2)
-                    {
-                        if (cur->left->balance_factor == 1)
-                            left_to_left(cur, prev);
-                        else if (cur->left->balance_factor == -1)
-                            left_to_right(cur, prev);
-                    }
+	//two rotation
+	void left_rotation(RBTreeNode* cur)
+	{
+		RBTreeNode* cur_right = cur->right;
+		RBTreeNode* cur_parent = cur->parent;
+		bool is_left = cur == cur_parent->left;
+		bool is_root = cur == root;
 
-                    if (prev_depth == cur_depth)
-                    {
-                        stack.destroy();
-                        if (deleted == deleted_parent->left)
-                            deleted_parent->left = nullptr;
-                        else
-                            deleted_parent->right = nullptr;
-                        delete deleted;
-                        return;
-                    }
-                }
-                else
-                {
-                    if (deleted_parent == nullptr)
-                        root = nullptr;
-                    else if (deleted == deleted_parent->left)
-                        deleted_parent->left = nullptr;
-                    else
-                        deleted_parent->right = nullptr;
-                    delete deleted;
-                    return;
-                }
-            }
-        }
-        else if (cur->left != nullptr && cur->right != nullptr)
-        {
-            //use the second way to delete cur node
-            //exchange deleted node with its direct prev or direct next in order
-            if (cur->balance_factor == 0 || cur->balance_factor == 1)
-            {
-                BlanceSortTree* cur_left_rightest = cur->left;
-                stack.push(cur_left_rightest);
-                while (cur_left_rightest->right != nullptr)
-                {
-                    stack.push(cur_left_rightest->right);
-                    cur_left_rightest = cur_left_rightest->right;
-                }
+		if (cur_right->left != nullptr)
+			cur_right->left->parent = cur;
+		cur->right = cur_right->left;
+		cur->parent = cur_right;
+		cur_right->left = cur;
 
-                //exchange data and invoke erase again
-                Hash tmp = cur->data;
-                cur->data = cur_left_rightest->data;
-                cur_left_rightest->data = tmp;
-                erase(cur_left_rightest, stack);
-            }
-            else
-            {
-                BlanceSortTree* cur_right_leftest = cur->right;
-                stack.push(cur_right_leftest);
-                while (cur_right_leftest->left != nullptr)
-                {
-                    stack.push(cur_right_leftest->left);
-                    cur_right_leftest = cur_right_leftest->left;
-                }
+		if (is_root)
+		{
+			cur_right->parent = cur_parent;
+			root = cur_right;
+		}
+		else
+		{
+			cur_right->parent = cur_parent;
+			if (is_left)
+				cur_parent->left = cur_right;
+			else
+				cur_parent->right = cur_right;
+		}
+	}
 
-                //exchange data and invoke erase again
-                Hash tmp = cur->data;
-                cur->data = cur_right_leftest->data;
-                cur_right_leftest->data = tmp;
-                erase(cur_right_leftest, stack);
-            }
-        }
-        else if (cur->left != nullptr || cur->right != nullptr)
-        {
-            BlanceSortTree* deleted = cur;
-            stack.pop();
-            BlanceSortTree* deleted_parent = stack.empty() ? nullptr : stack.top();
-            stack.push(cur);
+	void right_rotation(RBTreeNode* cur)
+	{
+		RBTreeNode* cur_left = cur->left;
+		RBTreeNode* cur_parent = cur->parent;
+		bool is_left = cur == cur_parent->left;
+		bool is_root = cur == root;
 
-            int prev_depth = 0;
-            int cur_depth = 0;
-            if (cur->left != nullptr)
-            {
-                int prev_left = cur->balance_factor;
-                prev_depth = prev_left + 1;
-                cur_depth = prev_left;
-            }
-            else
-            {
-                int prev_right = -cur->balance_factor;
-                prev_depth = prev_right + 1;
-                cur_depth = prev_right;
-            }
-            while (true)
-            {
-                cur = stack.top();
-                stack.pop();
-                if (!stack.empty())
-                {
-                    prev = stack.top();
-                    if (cur == prev->left)
-                    {
-                        int prev_right = prev_depth - prev->balance_factor;
-                        prev->balance_factor = cur_depth - prev_right;
-                        prev_depth = std::max(prev_right, prev_depth) + 1;
-                        cur_depth = std::max(cur_depth, prev_right) + 1;
-                    }
-                    else
-                    {
-                        int prev_left = prev_depth + prev->balance_factor;
-                        prev->balance_factor = prev_left - cur_depth;
-                        prev_depth = std::max(prev_left, prev_depth) + 1;
-                        cur_depth = std::max(cur_depth, prev_left) + 1;
-                    }
+		if (cur_left->right != nullptr)
+			cur_left->right->parent = cur;
+		cur->left = cur_left->right;
+		cur->parent = cur_left;
+		cur_left->right = cur;
 
-                    if (cur->balance_factor == -2)
-                    {
-                        if (cur->right->balance_factor == -1)
-                            right_to_right(cur, prev);
-                        else if (cur->right->balance_factor == 1)
-                            right_to_left(cur, prev);
-                    }
-                    else if (cur->balance_factor == 2)
-                    {
-                        if (cur->left->balance_factor == 1)
-                            left_to_left(cur, prev);
-                        else if (cur->left->balance_factor == -1)
-                            left_to_right(cur, prev);
-                    }
+		if (is_root)
+		{
+			cur_left->parent = cur_parent;
+			root = cur_left;
+		}
+		else
+		{
+			cur_left->parent = cur_parent;
+			if (is_left)
+				cur_parent->left = cur_left;
+			else
+				cur_parent->right = cur_left;
+		}
+	}
 
-                    if (prev_depth == cur_depth)
-                    {
-                        stack.destroy();
-                        if (deleted == deleted_parent->left)
-                        {
-                            if (deleted->left != nullptr)
-                                deleted_parent->left = deleted->left;
-                            else
-                                deleted_parent->left = deleted->right;
-                        }
-                        else
-                        {
-                            if (deleted->left != nullptr)
-                                deleted_parent->right = deleted->left;
-                            else
-                                deleted_parent->right = deleted->right;
-                        }
-                        delete deleted;
-                        return;
-                    }
-                }
-                else
-                {
-                    if (deleted_parent == nullptr)
-                    {
-                        if (deleted->left != nullptr)
-                            root = deleted->left;
-                        else
-                            root = deleted->right;
-                    }
-                    else if (deleted == deleted_parent->left)
-                    {
-                        if (deleted->left != nullptr)
-                            deleted_parent->left = deleted->left;
-                        else
-                            deleted_parent->left = deleted->right;
-                    }
-                    else
-                    {
-                        if (deleted->left != nullptr)
-                            deleted_parent->right = deleted->left;
-                        else
-                            deleted_parent->right = deleted->right;
-                    }
-                    delete deleted;
-                    return;
-                }
-            }
-        }
-    }
-
-    void find_both(const Ty_Key& key, BlanceSortTree* node, BlanceSortTree*& cur, BlanceSortTree*& prev) const
-    {
-        if (node == nullptr)
-        {
-            cur = nullptr;
-            prev = nullptr;
-            return;
-        }
-        else if (Pred()(key, node->data.key))
-        {
-            cur = node;
-            return;
-        }
-        else if (Compare()(key, node->data.key))
-        {
-            prev = node;
-            find_both(key, node->left, cur, prev);
-        }
-        else
-        {
-            prev = node;
-            find_both(key, node->right, cur, prev);
-        }
-    }
-
-    //four rotation
-    void right_to_left(BlanceSortTree* node, BlanceSortTree*& prev)
-    {
-        BlanceSortTree* node_right = node->right;
-        BlanceSortTree* node_right_left = node_right->left;
-        BlanceSortTree* node_right_left_left = node_right_left->left;
-        BlanceSortTree* node_right_left_right = node_right_left->right;
-        node_right->left = node_right_left_right;
-        node->right = node_right_left_left;
-        node_right_left->left = node;
-        node_right_left->right = node_right;
-        if (node_right_left->balance_factor == 1)
-        {
-            node_right_left->balance_factor = 0;
-            node_right->balance_factor = -1;
-            node->balance_factor = 0;
-        }
-        else if (node_right_left->balance_factor == -1)
-        {
-            node_right_left->balance_factor = 0;
-            node_right->balance_factor = 0;
-            node->balance_factor = 1;
-        }
-        else
-        {
-            node_right->balance_factor = 0;
-            node->balance_factor = 0;
-        }
-        if (node == prev)
-            prev = node_right_left;
-        else if (node == prev->left)
-            prev->left = node_right_left;
-        else
-            prev->right = node_right_left;
-    }
-
-    void left_to_right(BlanceSortTree* node, BlanceSortTree*& prev)
-    {
-        BlanceSortTree* node_left = node->left;
-        BlanceSortTree* node_left_right = node_left->right;
-        BlanceSortTree* node_left_right_left = node_left_right->left;
-        BlanceSortTree* node_left_right_right = node_left_right->right;
-        node_left->right = node_left_right_left;
-        node->left = node_left_right_right;
-        node_left_right->left = node_left;
-        node_left_right->right = node;
-        if (node_left_right->balance_factor == 1)
-        {
-            node_left_right->balance_factor = 0;
-            node_left->balance_factor = 0;
-            node->balance_factor = -1;
-        }
-        else if (node_left_right->balance_factor == -1)
-        {
-            node_left_right->balance_factor = 0;
-            node_left->balance_factor = 1;
-            node->balance_factor = 0;
-        }
-        else
-        {
-            node_left->balance_factor = 0;
-            node->balance_factor = 0;
-        }
-        if (node == prev)
-            prev = node_left_right;
-        else if (node == prev->left)
-            prev->left = node_left_right;
-        else
-            prev->right = node_left_right;
-    }
-
-    void left_to_left(BlanceSortTree* node, BlanceSortTree*& prev)
-    {
-
-        BlanceSortTree* node_left = node->left;
-        BlanceSortTree* node_left_right = node_left->right;
-        node_left->left = node;
-        node_left->balance_factor = 0;
-        node->right = node_left_right;
-        node->balance_factor = 0;
-        if (node == prev)
-            prev = node_left;
-        else if (node == prev->left)
-            prev->left = node_left;
-        else
-            prev->right = node_left;
-    }
-
-    void right_to_right(BlanceSortTree* node, BlanceSortTree*& prev)
-    {
-        BlanceSortTree* node_right = node->right;
-        BlanceSortTree* node_right_left = node_right->left;
-        node_right->left = node;
-        node_right->balance_factor = 0;
-        node->right = node_right_left;
-        node->balance_factor = 0;
-        if (prev == node)
-            prev = node_right;
-        else if (node == prev->left)
-            prev->left = node_right;
-        else
-            prev->right = node_right;
-    }
-
-    Info insert(const Hash& element, BlanceSortTree*& node, BlanceSortTree*& prev)
-    {
-        if (node == nullptr)
-        {
-            node = new BlanceSortTree(element);
-            if (node == prev)
-                return { 0, 0 };
-            else
-            {
-                if (node == prev->left)
-                    prev->balance_factor += 1;
-                else
-                    prev->balance_factor -= 1;
-                return { 0, 1 };
-            }
-        }
-        else if (Pred()(element.key, node->data.key))
-        {
-            node->data.value = element.value;
-            return { 0, 0 };
-        }
-        else if (Compare()(element.key, node->data.key))
-        {
-            Info node_left = insert(element, node->left, node);
-            if (node_left.prev_depth == node_left.cur_depth)
-                return { 0, 0 };
-            else if (node->balance_factor == -2)
-            {
-                if (node->right->balance_factor == -1)
-                    right_to_right(node, prev);
-                else if (node->right->balance_factor == 1)
-                    right_to_left(node, prev);
-                return { node_left.cur_depth, node_left.cur_depth };
-            }
-            else if (node->balance_factor == 2)
-            {
-                if (node->left->balance_factor == 1)
-                    left_to_left(node, prev);
-                else if (node->left->balance_factor == -1)
-                    left_to_right(node, prev);
-                return { node_left.cur_depth, node_left.cur_depth };
-            }
-            else
-            {
-                int node_right = node_left.cur_depth - node->balance_factor;
-                int node_cur_depth = std::max(node_left.cur_depth, node_right) + 1;
-                int node_prev_depth = std::max(node_left.prev_depth, node_right) + 1;
-
-                if (node == prev->left)
-                {
-                    int prev_right = node_prev_depth - prev->balance_factor;
-                    prev->balance_factor = node_cur_depth - prev_right;
-                }
-                else if (node == prev->right)
-                {
-                    int prev_left = prev->balance_factor + node_prev_depth;
-                    prev->balance_factor = prev_left - node_cur_depth;
-                }
-
-                return { node_prev_depth, node_cur_depth };
-            }
-        }
-        else
-        {
-            Info node_right = insert(element, node->right, node);
-            if (node_right.prev_depth == node_right.cur_depth)
-                return { 0, 0 };
-            else if (node->balance_factor == -2)
-            {
-                if (node->right->balance_factor == -1)
-                    right_to_right(node, prev);
-                else if (node->right->balance_factor == 1)
-                    right_to_left(node, prev);
-                return { node_right.cur_depth, node_right.cur_depth };
-            }
-            else if (node->balance_factor == 2)
-            {
-                if (node->left->balance_factor == 1)
-                    left_to_left(node, prev);
-                else if (node->left->balance_factor == -1)
-                    left_to_right(node, prev);
-                return { node_right.cur_depth, node_right.cur_depth };
-            }
-            else
-            {
-                int node_left = node_right.cur_depth + node->balance_factor;
-                int node_cur_depth = std::max(node_right.cur_depth, node_left) + 1;
-                int node_prev_depth = std::max(node_right.prev_depth, node_left) + 1;
-
-                if (node == prev->left)
-                {
-                    int prev_right = node_prev_depth - prev->balance_factor;
-                    prev->balance_factor = node_cur_depth - prev_right;
-                }
-                else if (node == prev->right)
-                {
-                    int prev_left = prev->balance_factor + node_prev_depth;
-                    prev->balance_factor = prev_left - node_cur_depth;
-                }
-
-                return { node_prev_depth, node_cur_depth };
-            }
-        }
-    }
+	void insert(const Hash& element, RBTreeNode*& node, RBTreeNode* prev)
+	{
+		if (node == nullptr)
+		{
+			node = new RBTreeNode(element);
+			if (node == root)
+			{
+				node->color = Color::black;
+				node->parent = new RBTreeNode;
+			}
+			else if (prev->color == Color::red)
+			{
+				node->parent = prev;
+				RBTreeNode* node_parent = node->parent;
+				RBTreeNode* node_grand = node_parent->parent;
+				if (node == prev->left)
+				{
+					if (node_parent == node_grand->left)
+					{
+						right_rotation(node_grand);
+						node_grand->color = Color::red;
+						node_parent->color = Color::black;
+					}
+					else
+					{
+						right_rotation(node_parent);
+						left_rotation(node_grand);
+						node_grand->color = Color::red;
+						node_parent->parent->color = Color::black;
+					}
+				}
+				else
+				{
+					if (node_parent == node_grand->left)
+					{
+						left_rotation(node_parent);
+						right_rotation(node_grand);
+						node_grand->color = Color::red;
+						node_parent->parent->color = Color::black;
+					}
+					else
+					{
+						left_rotation(node_grand);
+						node_grand->color = Color::red;
+						node_parent->color = Color::black;
+					}
+				}
+			}
+			else
+			{
+				node->color = Color::red;
+				node->parent = prev;
+			}
+		}
+		else if (Pred()(element.key, node->data.key))
+			node->data.value = element.value;
+		else if (Compare()(element.key, node->data.key))
+		{
+			//adjust to avoid complicated condition when two subtree are both red
+			if (node->left != nullptr && node->right != nullptr &&
+				node->left->color == Color::red && node->right->color == Color::red)
+			{
+				node->left->color = Color::black;
+				node->right->color = Color::black;
+				if (node != root)
+				{
+					node->color = Color::red;
+					if (node->parent->color == Color::red)
+					{
+						RBTreeNode* node_parent = node->parent;
+						RBTreeNode* node_grand = node_parent->parent;
+						if (node_parent == node_grand->left)
+						{
+							right_rotation(node_grand);
+							node_grand->color = Color::red;
+							node_parent->color = Color::black;
+						}
+						else
+						{
+							right_rotation(node_parent);
+							left_rotation(node_grand);
+							node_grand->color = Color::red;
+							node->color = Color::black;
+							insert(element, node_parent->right->left, node_parent->right);
+							return;
+						}
+					}
+				}
+			}
+			insert(element, node->left, node);
+		}
+		else
+		{
+			//adjust to avoid complicated condition when two subtree are both red
+			if (node->left != nullptr && node->right != nullptr &&
+				node->left->color == Color::red && node->right->color == Color::red)
+			{
+				node->left->color = Color::black;
+				node->right->color = Color::black;
+				if (node != root)
+				{
+					node->color = Color::red;
+					if (node->parent->color == Color::red)
+					{
+						RBTreeNode* node_parent = node->parent;
+						RBTreeNode* node_grand = node_parent->parent;
+						if (node_parent == node_grand->left)
+						{
+							left_rotation(node_parent);
+							right_rotation(node_grand);
+							node_grand->color = Color::red;
+							node->color = Color::black;
+							insert(element, node_grand->left->right, node_grand->left);
+							return;
+						}
+						else
+						{
+							left_rotation(node_grand);
+							node_grand->color = Color::red;
+							node_parent->color = Color::black;
+						}
+					}
+				}
+			}
+			insert(element, node->right, node);
+		}
+	}
 };
