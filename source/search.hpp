@@ -978,17 +978,17 @@ public:
 		{
 			assert(*this != tree->end());
 
-            if(ptr->right != nullptr)
-            {
-                RBTreeNode* ptr_right = ptr->right;
-                while(ptr_right->left != nullptr)
-                    ptr_right = ptr_right->left;
-                ptr = ptr_right;
-            }
-            else if(ptr == tree->root || ptr == ptr->parent->right)
-                ptr = tree->root->parent;
-            else if(ptr == ptr->parent->left)
-                ptr = ptr->parent;
+			if (ptr->right != nullptr)
+			{
+				RBTreeNode* ptr_right = ptr->right;
+				while (ptr_right->left != nullptr)
+					ptr_right = ptr_right->left;
+				ptr = ptr_right;
+			}
+			else if (ptr == tree->root || ptr == ptr->parent->right)
+				ptr = tree->root->parent;
+			else if (ptr == ptr->parent->left)
+				ptr = ptr->parent;
 
 			return *this;
 		}
@@ -1044,85 +1044,85 @@ public:
 		insert(element, root, root);
 	}
 
-    bool count(const Ty_Key& key) const
-    {
-        assert(root != nullptr);
-        RBTreeNode* cur = root;
-        while (cur != nullptr)
-        {
-            if (Pred()(key, cur->data.key))
-                break;
-            else if (Compare()(key, cur->data.key))
-                cur = cur->left;
-            else
-                cur = cur->right;
-        }
+	bool count(const Ty_Key& key) const
+	{
+		assert(root != nullptr);
+		RBTreeNode* cur = root;
+		while (cur != nullptr)
+		{
+			if (Pred()(key, cur->data.key))
+				break;
+			else if (Compare()(key, cur->data.key))
+				cur = cur->left;
+			else
+				cur = cur->right;
+		}
 
-        if (cur != nullptr)
-            return true;
-        else
-            return false;
-    }
+		if (cur != nullptr)
+			return true;
+		else
+			return false;
+	}
 
-    Ty_Val& operator[](const Ty_Key& key)
-    {
-        assert(root != nullptr);
-        RBTreeNode* cur = root;
-        while (cur != nullptr)
-        {
-            if (Pred()(key, cur->data.key))
-                break;
-            else if (Compare()(key, cur->data.key))
-                cur = cur->left;
-            else
-                cur = cur->right;
-        }
+	Ty_Val& operator[](const Ty_Key& key)
+	{
+		assert(root != nullptr);
+		RBTreeNode* cur = root;
+		while (cur != nullptr)
+		{
+			if (Pred()(key, cur->data.key))
+				break;
+			else if (Compare()(key, cur->data.key))
+				cur = cur->left;
+			else
+				cur = cur->right;
+		}
 
-        if (cur != nullptr)
-            return cur->data.value;
-        else
-        {
-            insert(key, Ty_Val());
-            return operator[](key);
-        }
-    }
+		if (cur != nullptr)
+			return cur->data.value;
+		else
+		{
+			insert(key, Ty_Val());
+			return operator[](key);
+		}
+	}
 
-    const Ty_Val& operator[](const Ty_Key& key) const
-    {
-        assert(root != nullptr);
-        RBTreeNode* cur = root;
-        while (cur != nullptr)
-        {
-            if (Pred()(key, cur->data.key))
-                break;
-            else if (Compare()(key, cur->data.key))
-                cur = cur->left;
-            else
-                cur = cur->right;
-        }
+	const Ty_Val& operator[](const Ty_Key& key) const
+	{
+		assert(root != nullptr);
+		RBTreeNode* cur = root;
+		while (cur != nullptr)
+		{
+			if (Pred()(key, cur->data.key))
+				break;
+			else if (Compare()(key, cur->data.key))
+				cur = cur->left;
+			else
+				cur = cur->right;
+		}
 
-        if (cur != nullptr)
-            return cur->data.value;
-        else
-        {
-            insert(key, Ty_Val());
-            return operator[](key);
-        }
-    }
+		if (cur != nullptr)
+			return cur->data.value;
+		else
+		{
+			insert(key, Ty_Val());
+			return operator[](key);
+		}
+	}
 
 	Iterator find(const Ty_Key& key) const
 	{
 		assert(root != nullptr);
-        RBTreeNode* cur = root;
-        while (cur != nullptr)
-        {
-            if (Pred()(key, cur->data.key))
-                break;
-            else if (Compare()(key, cur->data.key))
-                cur = cur->left;
-            else
-                cur = cur->right;
-        }
+		RBTreeNode* cur = root;
+		while (cur != nullptr)
+		{
+			if (Pred()(key, cur->data.key))
+				break;
+			else if (Compare()(key, cur->data.key))
+				cur = cur->left;
+			else
+				cur = cur->right;
+		}
 
 		if (cur != nullptr)
 			return Iterator(cur, this);
@@ -1133,7 +1133,7 @@ public:
 	Iterator begin()
 	{
 		assert(root != nullptr);
-        RBTreeNode* cur = root;
+		RBTreeNode* cur = root;
 		while (cur->left != nullptr)
 			cur = cur->left;
 		return Iterator(cur, this);
@@ -1142,7 +1142,7 @@ public:
 	Iterator begin() const
 	{
 		assert(root != nullptr);
-        RBTreeNode* cur = root;
+		RBTreeNode* cur = root;
 		while (cur->left != nullptr)
 			cur = cur->left;
 		return Iterator(cur, this);
@@ -1164,10 +1164,10 @@ public:
 	{
 		Queue<RBTreeNode*> queue;
 		if (root)
-        {
-            delete root->parent;
-            queue.enqueue(root);
-        }
+		{
+			delete root->parent;
+			queue.enqueue(root);
+		}
 		while (!queue.empty())
 		{
 			RBTreeNode* front = queue.front();
@@ -1567,4 +1567,36 @@ private:
 			insert(element, node->right, node);
 		}
 	}
+};
+
+
+//B tree node
+template<typename T, uint32_t Num = 3>
+struct BTNode
+{
+	uint32_t num;
+	BTNode* parent;
+	Vector<T> keys;
+	Vector<BTNode*> children;
+	BTNode() : num(0), parent(nullptr)
+	{
+		keys.resize(Num);
+		children.resize(Num);
+	}
+	~BTNode()
+	{
+		if (!keys.empty())
+			keys.destroy();
+		if (!children.empty())
+			children.destroy();
+	}
+};
+
+
+template<typename T, uint32_t Num = 3, typename Compare = CompareLess<T>, typename Pred = Equal_To<T>>
+struct BTree
+{
+	using BTNode = BTNode<T, Num>;
+public:
+	BTNode* root;
 };
