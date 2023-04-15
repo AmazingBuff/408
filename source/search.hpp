@@ -5,7 +5,7 @@
 #include"stack.hpp"
 
 template<typename T, typename U>
-int binarySearch(U& container, T target)
+int BinarySearch(U& container, T target)
 {
 	int left = 0;
 	int right = container.size() - 1;
@@ -1571,32 +1571,237 @@ private:
 
 
 //B tree node
-template<typename T, uint32_t Num = 3>
+template<typename T, uint32_t Num = 3, typename Compare = CompareLess<T>, typename Pred = Equal_To<T>>
 struct BTNode
 {
 	uint32_t num;
 	BTNode* parent;
-	Vector<T> keys;
+	Vector<T> data;
 	Vector<BTNode*> children;
-	BTNode() : num(0), parent(nullptr)
-	{
-		keys.resize(Num);
-		children.resize(Num);
-	}
+	BTNode() : num(0), parent(nullptr) {}
 	~BTNode()
 	{
-		if (!keys.empty())
-			keys.destroy();
+		if (!data.empty())
+			data.destroy();
 		if (!children.empty())
 			children.destroy();
 	}
+
+public:
+	void insert(const T& element)
+	{
+		if (data.empty())
+		{
+			num = 1;
+			data.push_back(element);
+		}
+		else
+		{
+			uint32_t ret = find(element);
+			if (Pred()(element, data[ret]))
+				data[ret] = element;
+			else
+			{
+				data.insert(ret, element);
+				num += 1;
+			}
+		}
+	}
+
+	void insert(const uint32_t& pos, const T& element)
+	{
+		data.insert(pos, element);
+		num += 1;
+	}
+
+	void erase(const T& element)
+	{
+		uint32_t ret = find(element);
+		if (Pred()(element, data[ret]))
+		{
+			data.erase(ret);
+			num -= 1;
+		}
+	}
+
+	void erase(const uint32_t& pos)
+	{
+		data.erase(pos);
+		num -= 1;
+	}
+
+	uint32_t find(const T& element) const
+	{
+		uint32_t left = 0, right = data.size() - 1;
+		while (left <= right && right < data.size())
+		{
+			uint32_t middle = (left + right) >> 1;
+			if (Compare()(element, data[middle]))
+				right = middle - 1;
+			else if (Pred()(element, data[middle]))
+				return middle;
+			else
+				left = middle + 1;
+		}
+		//the right postion of the target
+		return left;
+	}
 };
 
+template<typename Hash, typename Compare>
+struct CompareHash
+{
+	bool operator()(const Hash& one, const Hash& the_other) const
+	{
+		return Compare()(one.key, the_other.key);
+	}
+};
 
-template<typename T, uint32_t Num = 3, typename Compare = CompareLess<T>, typename Pred = Equal_To<T>>
+template<typename Hash, typename Pred>
+struct EqualHash
+{
+	bool operator()(const Hash& one, const Hash& the_other) const
+	{
+		return Pred()(one.key, the_other.key);
+	}
+};
+
+template<typename Ty_Key, typename Ty_Val, uint32_t Num = 3, typename Compare = CompareLess<Ty_Key>, typename Pred = Equal_To<Ty_Key>>
 struct BTree
 {
-	using BTNode = BTNode<T, Num>;
+	using Hash = HashNode<Ty_Key, Ty_Val>;
+	using BTNode = BTNode<Hash, Num, CompareHash<Hash, Compare>, EqualHash<Hash, Pred>>;
 public:
 	BTNode* root;
+public:
+	BTree() : root(nullptr) { assert(Num > 2); }
+
+	void insert(const Hash& element)
+	{
+		if (root == nullptr)
+		{
+			root = new BTNode;
+			root->insert(element);
+		}
+		else
+		{
+			BTNode* cur = root;
+			uint32_t ret = 0;
+			while (true)
+			{
+				ret = cur->find(element);
+				if (ret >= cur->data.size() || !Pred()(element.key, cur->data[ret].key))
+				{
+					if (cur->children.empty())
+						break;
+					else
+						cur = cur->children[ret];
+				}
+				else
+				{
+					cur->data[ret].value = element.value;
+					return;
+				}
+			}
+
+			cur->insert(ret, element);
+			if (cur->num >= Num)
+				adjust(cur);
+		}
+	}
+
+	void insert(const Ty_Key& key, const Ty_Val& val)
+	{
+		Hash element(key, val);
+		insert(element);
+	}
+
+	void erase(const Ty_Key& key)
+	{
+		//exchange and delete leaf node
+		BTNode* cur = root;
+		BTNode* correct = nullptr;
+
+		Hash hash(key, Ty_Val());
+		uint32_t ret = 0;
+		uint32_t index = 0;
+		while (true)
+		{
+			ret = cur->find(hash);
+			if (cur->children.empty())
+				break;
+			else if (Pred()(key, cur->data[ret].key))
+			{
+				index = ret;
+				correct = cur;
+				cur = cur->children[ret + 1];
+			}
+			else
+				cur = cur->children[ret];
+		}
+
+		if (correct != nullptr)
+		{
+			correct->data[index];
+		}
+		else if (Pred()(key, cur->data[ret].key))
+			cur->erase(ret);
+	}
+
+	Ty_Val& find(const Ty_Key& key) const
+	{
+		assert(root != nullptr);
+		BTNode* cur = root;
+		Hash hash(key, Ty_Val());
+		while (cur != nullptr)
+		{
+			uint32_t ret = cur->find(hash);
+			if (Pred()(key, cur->data[ret].key))
+				return cur->data[ret].value;
+			else
+				cur = cur->children[ret];
+		}
+		return hash.value;
+	}
+
+	void adjust(BTNode* cur)
+	{
+		BTNode* new_node = new BTNode;
+		BTNode* cur_parent = cur->parent;
+		//upscale
+		uint32_t mid = (Num + 1) >> 1;
+		uint32_t mid_pos = mid - 1;
+		uint32_t left_size = mid_pos;
+		uint32_t right_size = Num >> 1;
+
+		new_node->num = right_size;
+		new_node->parent = cur_parent;
+		new_node->data.resize(right_size);
+		memmove(new_node->data.statistics(), cur->data.statistics() + mid, sizeof(Hash) * right_size);
+
+		if (cur_parent != nullptr)
+		{
+			uint32_t ret = cur_parent->find(cur->data[mid_pos]);
+			cur_parent->insert(ret, cur->data[mid_pos]);
+			//insert in ret + 1
+			cur_parent->children.insert(ret + 1, new_node);
+
+			if (cur_parent->num >= Num)
+				adjust(cur_parent);
+		}
+		else
+		{
+			root = new BTNode;
+			root->insert(cur->data[mid_pos]);
+			root->children.push_back(cur);
+			root->children.push_back(new_node);
+
+			cur->parent = root;
+			new_node->parent = root;
+		}
+
+		cur->num = left_size;
+		cur->data.resize(left_size);
+	}
+
 };

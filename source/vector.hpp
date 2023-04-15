@@ -187,18 +187,7 @@ public:
 		return ret;
 	}
 
-	void push_back(T& value)
-	{
-		if (full())
-		{
-			uint32_t newSpace = space > 20 ? space + 8 : 2 * space + 1;
-			reserve(newSpace);
-		}
-		data[length] = value;
-		length++;
-	}
-
-	void push_back(T&& value)
+	void push_back(const T& value)
 	{
 		if (full())
 		{
@@ -215,12 +204,42 @@ public:
 		length--;
 	}
 
+	void insert(const uint32_t& pos, const T& value)
+	{
+		assert(pos <= length);
+		if (pos == length)
+			push_back(value);
+		else
+		{
+			if (full())
+			{
+				uint32_t newSpace = space > 20 ? space + 8 : 2 * space + 1;
+				reserve(newSpace);
+			}
+			memmove(data + pos + 1, data + pos, sizeof(T) * (length - pos));
+			data[pos] = value;
+			length++;
+		}
+	}
+
+	void erase(const uint32_t& pos)
+	{
+		assert(pos < length);
+		if (pos == length - 1)
+			pop_back();
+		else
+		{
+			memmove(data + pos, data + pos + 1, sizeof(T) * (length - pos - 1));
+			length--;
+		}
+	}
+
 	void clear()
 	{
 		length = 0;
 	}
 
-	void resize(uint32_t newSize)
+	void resize(const uint32_t& newSize)
 	{
 		if (newSize > space)
 			reserve(newSize);
@@ -257,16 +276,21 @@ public:
 		return data + length;
 	}
 
-	T& operator[](uint32_t index)
+	T& operator[](const uint32_t& index)
 	{
 		assert(index < length);
 		return data[index];
 	}
 
-	const T& operator[](uint32_t index) const
+	const T& operator[](const uint32_t& index) const
 	{
 		assert(index < length);
 		return data[index];
+	}
+
+	explicit operator bool() const
+	{
+		return data != nullptr && length != 0;
 	}
 
 	bool full() const
@@ -297,7 +321,7 @@ public:
 		space = 0;
 	}
 
-	void reserve(uint32_t newSpace)
+	void reserve(const uint32_t& newSpace)
 	{
 		T* newData = new T[newSpace];
 		if (data)
