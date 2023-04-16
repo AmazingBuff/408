@@ -5,7 +5,7 @@
 #include"stack.hpp"
 
 template<typename T, typename U>
-int BinarySearch(U& container, T target)
+int BinarySearch(const U& container, const T& target)
 {
 	int left = 0;
 	int right = container.size() - 1;
@@ -20,6 +20,20 @@ int BinarySearch(U& container, T target)
 			return middle;
 	}
 	return -1;
+}
+
+template<typename T, typename U>
+int BinarySearch(const U& container, const T& target, const int& left, const int& right)
+{
+	if (left > right)
+		return -1;
+	int middle = (left + right) >> 1;
+	if (target > container[middle])
+		return BinarySearch(container, target, middle + 1, right);
+	else if (target < container[middle])
+		return BinarySearch(container, target, left, middle - 1);
+	else
+		return middle;
 }
 
 
