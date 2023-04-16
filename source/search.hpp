@@ -1770,6 +1770,7 @@ public:
 		return hash.value;
 	}
 
+private:
 	void merge_adjust(BTNode* cur, const uint32_t& ret)
 	{
 		BTNode* cur_parent = cur->parent;
@@ -1899,5 +1900,4 @@ public:
 		cur->num = left_size;
 		cur->data.resize(left_size);
 	}
-
 };
