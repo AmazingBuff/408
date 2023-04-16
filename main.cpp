@@ -121,30 +121,20 @@ int main()
 	ity++;
 	++ity;
 
-	BTree<uint32_t, char, 4> btree;
+	BTree<uint32_t, char, 5> btree;
 	btree.insert(4, 'a');
 	btree.insert(5, 'b');
 	btree.insert(7, 'c');
 	btree.insert(6, 'd');
-
-	for (uint32_t i = 0; i < btree.root->data.size(); i++)
-	{
-		std::cout << btree.root->data[i].key << std::endl;
-	}
-
-	for (uint32_t i = 0; i < btree.root->children.size(); i++)
-	{
-		for (uint32_t j = 0; j < btree.root->children[i]->data.size(); j++)
-		{
-			std::cout << btree.root->children[i]->data[j].key << std::endl;
-		}
-	}
 
 	btree.insert(3, 'e');
 	btree.insert(22, 'f');
 	btree.insert(31, 'g');
 	btree.insert(34, 'h');
 	btree.insert(21, 'i');
+
+	btree.erase(4);
+	btree.erase(5);
 
 	for (uint32_t i = 0; i < btree.root->data.size(); i++)
 	{

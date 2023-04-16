@@ -1582,9 +1582,7 @@ struct BTNode
 	~BTNode()
 	{
 		if (!data.empty())
-			data.destroy();
-		if (!children.empty())
-			children.destroy();
+			destory();
 	}
 
 public:
@@ -1614,16 +1612,6 @@ public:
 		num += 1;
 	}
 
-	void erase(const T& element)
-	{
-		uint32_t ret = find(element);
-		if (Pred()(element, data[ret]))
-		{
-			data.erase(ret);
-			num -= 1;
-		}
-	}
-
 	void erase(const uint32_t& pos)
 	{
 		data.erase(pos);
@@ -1645,6 +1633,14 @@ public:
 		}
 		//the right postion of the target
 		return left;
+	}
+
+	void destory()
+	{
+		if (!data.empty())
+			data.destroy();
+		if (!children.empty())
+			children.destroy();
 	}
 };
 
@@ -1706,7 +1702,7 @@ public:
 
 			cur->insert(ret, element);
 			if (cur->num >= Num)
-				adjust(cur);
+				insert_adjust(cur);
 		}
 	}
 
@@ -1728,21 +1724,31 @@ public:
 		while (true)
 		{
 			ret = cur->find(hash);
-			if (cur->children.empty())
-				break;
-			else if (Pred()(key, cur->data[ret].key))
+			if (ret >= cur->data.size() || !Pred()(key, cur->data[ret].key))
+			{
+				if (cur->children.empty())
+					break;
+				else
+					cur = cur->children[ret];
+			}
+			else
 			{
 				index = ret;
 				correct = cur;
-				cur = cur->children[ret + 1];
+				if (cur->children.empty())
+					break;
+				else
+					cur = cur->children[ret + 1];;
 			}
-			else
-				cur = cur->children[ret];
 		}
 
 		if (correct != nullptr)
 		{
-			correct->data[index];
+			correct->data[index] = cur->data[ret];
+			if (cur->num >= (Num + 1) >> 1 || cur == root)
+				cur->erase(ret);
+			else
+				merge_adjust(cur, ret);
 		}
 		else if (Pred()(key, cur->data[ret].key))
 			cur->erase(ret);
@@ -1756,15 +1762,105 @@ public:
 		while (cur != nullptr)
 		{
 			uint32_t ret = cur->find(hash);
-			if (Pred()(key, cur->data[ret].key))
-				return cur->data[ret].value;
-			else
+			if (ret >= cur->data.size() || !Pred()(element.key, cur->data[ret].key))
 				cur = cur->children[ret];
+			else
+				return cur->data[ret].value
 		}
 		return hash.value;
 	}
 
-	void adjust(BTNode* cur)
+	void merge_adjust(BTNode* cur, const uint32_t& ret)
+	{
+		BTNode* cur_parent = cur->parent;
+		uint32_t parent_index = cur_parent->find(cur->data[ret]);
+		if (parent_index != cur_parent->num && cur_parent->children[parent_index + 1]->num >= (Num + 1) >> 1)
+			left_adjust(cur, parent_index);
+		else if (parent_index != 0 && cur_parent->children[parent_index - 1]->num >= (Num + 1) >> 1)
+			right_adjust(cur, parent_index - 1);
+		else if (parent_index != 0)
+		{
+			//select one of the brother node to merge, here we choose left
+			Hash parent_element = cur_parent->data[parent_index - 1];
+			BTNode* left = cur_parent->children[parent_index - 1];
+			left->insert(left->num, parent_element);
+
+			cur_parent->erase(parent_index - 1);
+			cur_parent->children.erase(parent_index);
+
+			uint32_t length = cur->num;
+			for (uint32_t i = 0; i < length; i++)
+			{
+				if (i != ret)
+					left->insert(left->num, cur->data[0]);
+				cur->erase(0);
+			}
+
+			if (cur_parent == root && cur_parent->num == 0)
+				root = left;
+			else if (cur_parent != root && cur_parent->num < (Num + 1) >> 1 - 1)
+				merge_adjust(cur_parent, cur_parent->num);
+
+			cur->destory();
+			delete cur;
+			cur = nullptr;
+		}
+		else
+		{
+			Hash parent_element = cur_parent->data[parent_index];
+			BTNode* right = cur_parent->children[parent_index + 1];
+			right->insert(0, parent_element);
+
+			cur_parent->erase(parent_index);
+			cur_parent->children.erase(parent_index);
+
+			uint32_t length = cur->num;
+			for (uint32_t i = 0; i < length; i++)
+			{
+				if (i != length - ret - 1)
+					right->insert(0, cur->data[cur->num - 1]);
+				cur->erase(cur->num - 1);
+			}
+
+			if (cur_parent == root && cur_parent->num == 0)
+				root = right;
+			else if (cur_parent != root && cur_parent->num < (Num + 1) >> 1 - 1)
+				merge_adjust(cur_parent, cur_parent->num);
+
+			cur->destory();
+			delete cur;
+			cur = nullptr;
+		}
+
+		if (cur != nullptr)
+			cur->erase(ret);
+	}
+
+	void right_adjust(BTNode* cur, const uint32_t& left_pos)
+	{
+		BTNode* cur_parent = cur->parent;
+		BTNode* left = cur_parent->children[left_pos];
+		Hash parent_data = cur_parent->data[left_pos];
+		Hash left_data = left->data[left->num - 1];
+
+		cur_parent->data[left_pos] = left_data;
+		cur->insert(0, parent_data);
+		left->erase(left->num - 1);
+	}
+
+	void left_adjust(BTNode* cur, const uint32_t& right_pos)
+	{
+		BTNode* cur_parent = cur->parent;
+		BTNode* right = cur_parent->children[right_pos + 1];
+		Hash parent_data = cur_parent->data[right_pos];
+		Hash right_data = right->data[0];
+
+		cur_parent->data[right_pos] = right_data;
+		cur->insert(cur->num, parent_data);
+		right->erase(0);
+	}
+
+	void insert_adjust(BTNode* cur)
 	{
 		BTNode* new_node = new BTNode;
 		BTNode* cur_parent = cur->parent;
@@ -1787,7 +1883,7 @@ public:
 			cur_parent->children.insert(ret + 1, new_node);
 
 			if (cur_parent->num >= Num)
-				adjust(cur_parent);
+				insert_adjust(cur_parent);
 		}
 		else
 		{
