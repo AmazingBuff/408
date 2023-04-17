@@ -1776,10 +1776,10 @@ public:
 		while (cur != nullptr)
 		{
 			uint32_t ret = cur->find(hash);
-			if (ret >= cur->data.size() || !Pred()(element.key, cur->data[ret].key))
+			if (ret >= cur->data.size() || !Pred()(key, cur->data[ret].key))
 				cur = cur->children[ret];
 			else
-				return cur->data[ret].value
+				return cur->data[ret].value;
 		}
 		return hash.value;
 	}
@@ -1813,7 +1813,7 @@ private:
 
 			if (cur_parent == root && cur_parent->num == 0)
 				root = left;
-			else if (cur_parent != root && cur_parent->num < (Num + 1) >> 1 - 1)
+			else if (cur_parent != root && cur_parent->num < ((Num + 1) >> 1) - 1)
 				merge_adjust(cur_parent, cur_parent->num);
 
 			cur->destory();
@@ -1839,7 +1839,7 @@ private:
 
 			if (cur_parent == root && cur_parent->num == 0)
 				root = right;
-			else if (cur_parent != root && cur_parent->num < (Num + 1) >> 1 - 1)
+			else if (cur_parent != root && cur_parent->num < ((Num + 1) >> 1) - 1)
 				merge_adjust(cur_parent, cur_parent->num);
 
 			cur->destory();
@@ -1877,7 +1877,7 @@ private:
 
 	void insert_adjust(BTNode* cur)
 	{
-		BTNode* new_node = new BTNode;
+		auto new_node = new BTNode;
 		BTNode* cur_parent = cur->parent;
 		//upscale
 		uint32_t mid = (Num + 1) >> 1;
