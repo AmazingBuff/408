@@ -1596,7 +1596,7 @@ struct BTNode
 	~BTNode()
 	{
 		if (!data.empty())
-			destory();
+			destroy();
 	}
 
 public:
@@ -1645,11 +1645,11 @@ public:
 			else
 				left = middle + 1;
 		}
-		//the right postion of the target
+		//the right position of the target
 		return left;
 	}
 
-	void destory()
+	void destroy()
 	{
 		if (!data.empty())
 			data.destroy();
@@ -1776,10 +1776,10 @@ public:
 		while (cur != nullptr)
 		{
 			uint32_t ret = cur->find(hash);
-			if (ret >= cur->data.size() || !Pred()(element.key, cur->data[ret].key))
+			if (ret >= cur->data.size() || !Pred()(key, cur->data[ret].key))
 				cur = cur->children[ret];
 			else
-				return cur->data[ret].value
+				return cur->data[ret].value;
 		}
 		return hash.value;
 	}
@@ -1813,7 +1813,7 @@ private:
 
 			if (cur_parent == root && cur_parent->num == 0)
 				root = left;
-			else if (cur_parent != root && cur_parent->num < (Num + 1) >> 1 - 1)
+			else if (cur_parent != root && cur_parent->num < ((Num + 1) >> 1) - 1)
 				merge_adjust(cur_parent, cur_parent->num);
 
 			cur->destory();
@@ -1839,7 +1839,7 @@ private:
 
 			if (cur_parent == root && cur_parent->num == 0)
 				root = right;
-			else if (cur_parent != root && cur_parent->num < (Num + 1) >> 1 - 1)
+			else if (cur_parent != root && cur_parent->num < ((Num + 1) >> 1) - 1)
 				merge_adjust(cur_parent, cur_parent->num);
 
 			cur->destory();
