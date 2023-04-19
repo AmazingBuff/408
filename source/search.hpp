@@ -1877,7 +1877,7 @@ private:
 
 	void insert_adjust(BTNode* cur)
 	{
-		BTNode* new_node = new BTNode;
+		auto new_node = new BTNode;
 		BTNode* cur_parent = cur->parent;
 		//upscale
 		uint32_t mid = (Num + 1) >> 1;
