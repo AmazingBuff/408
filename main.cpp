@@ -18,29 +18,42 @@ void visit(char val)
 int main()
 {
 
-	Vector<char> vertices = { 'a', 'b', 'c', 'd', 'e' };
-	Vector<ArcWeight> arcs = { {0, 1, 1}, {1, 0, 2}
-	, {1, 2, 0}, {2, 1, 0}, {2, 3, 0}, {3, 2, 0}, {1, 4, 0}, {4, 1, 0}, {2, 4, 0}, {4, 2, 0} };
-	Graph<char> graph(Graph<char>::Type::adjacency_list, vertices, arcs);
+	Vector<char> vertices = { 'a', 'b', 'c', 'd', 'e', 'f'};
+	Vector<Arc<uint8_t>> arcs = { {0, 1, 6}, {0, 2, 1}, {0, 3, 5},
+                               {1, 0, 6}, {1, 2, 5}, {1, 4, 3},
+                               {2, 0, 1}, {2, 1, 5}, {2, 3, 5}, {2, 4, 6}, {2, 5, 4},
+                               {3, 0, 5}, {3, 2, 5}, {3, 5, 2},
+                               {4, 1, 3}, {4, 2, 6}, {4, 5, 6},
+                               {5, 2, 4}, {5, 3, 2}, {5, 4, 6}};
+	Graph<char, uint8_t> graph(Graph<char, uint8_t>::Type::adjacency_list, vertices, arcs);
 
-	Vector<ArcWeight> single_arcs = { {0, 1, 1}, {2, 1, 0}, {2, 3, 0}, {4, 1, 0}, {4, 2, 0} };
+    SpanningTreeNode<char, uint8_t>* nde = graph.Prim(0);
+
+	Vector<Arc<uint8_t>> single_arcs = { {0, 1, 6}, {0, 2, 1}, {0, 3, 5},
+                                         {1, 2, 5}, {1, 4, 3},
+                                         {2, 3, 5}, {2, 4, 6}, {2, 5, 4},
+                                         {3, 5, 2},
+                                         {4, 5, 6} };
 
 	auto start_time = std::chrono::high_resolution_clock::now();
-	graph.access(Graph<char>::Mode::depth_first_search, visit, 1);
+	graph.access(Graph<char, uint8_t>::Mode::depth_first_search, visit, 1);
 	auto end_time = std::chrono::high_resolution_clock::now();
 	std::cout << std::endl;
-	graph.access(Graph<char>::Mode::broadth_first_search, visit, 1);
+	graph.access(Graph<char, uint8_t>::Mode::broadth_first_search, visit, 1);
 	std::cout << std::endl;
-	Graph<char> graph2(Graph<char>::Type::orthogonal_list, vertices, arcs);
-	graph2.access(Graph<char>::Mode::depth_first_search, visit, 1);
+	Graph<char, uint8_t> graph2(Graph<char, uint8_t>::Type::orthogonal_list, vertices, arcs);
+	graph2.access(Graph<char, uint8_t>::Mode::depth_first_search, visit, 1);
 	std::cout << std::endl;
-	graph2.access(Graph<char>::Mode::broadth_first_search, visit, 1);
+	graph2.access(Graph<char, uint8_t>::Mode::broadth_first_search, visit, 1);
 	std::cout << std::endl;
 
-	Graph<char> graph3(Graph<char>::Type::adjacency_multlist, vertices, single_arcs);
-	graph3.access(Graph<char>::Mode::depth_first_search, visit, 1);
+	Graph<char, uint8_t> graph3(Graph<char, uint8_t>::Type::adjacency_multilist, vertices, single_arcs);
+
+    SpanningTreeNode<char, uint8_t>* ndedd = graph3.Prim(0);
+
+	graph3.access(Graph<char, uint8_t>::Mode::depth_first_search, visit, 1);
 	std::cout << std::endl;
-	graph3.access(Graph<char>::Mode::broadth_first_search, visit, 1);
+	graph3.access(Graph<char, uint8_t>::Mode::broadth_first_search, visit, 1);
 	std::cout << std::endl;
 
 	std::cout << (end_time - start_time).count() << std::endl;

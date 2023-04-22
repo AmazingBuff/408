@@ -2,6 +2,7 @@
 
 #include"hash.hpp"
 #include"queue.hpp"
+#include"list.hpp"
 
 //adjacency list
 template<typename T>
@@ -84,6 +85,20 @@ struct Arc
 
 typedef Arc<uint32_t> ArcWeight;
 
+
+template<typename T, typename U = uint32_t>
+struct SpanningTreeNode
+{
+	uint32_t vertexIndex = 0;
+	T data;
+	SpanningTreeNode* parent = nullptr;
+	Vector<SpanningTreeNode*> children;
+	Vector<U> arcsWeight; //point out from current node, match with children node
+	SpanningTreeNode(const uint32_t& index, const T& value) : vertexIndex(index), data(value) {}
+};
+
+
+
 template<typename T, typename U = uint32_t>
 struct Graph
 {
@@ -92,9 +107,10 @@ public:
 	{
 		adjacency_list,
 		reverse_adjacency_list,
+		//only for digraph
 		orthogonal_list,
-		//only for undigraph
-		adjacency_multlist
+		//only for un-digraph
+		adjacency_multilist
 	};
 
 	enum class Mode : bool
@@ -116,8 +132,8 @@ public:
 		case Type::orthogonal_list:
 			createOrthList(vertices, arcs);
 			break;
-		case Type::adjacency_multlist:
-			createAdjMultList(vertices, arcs);
+		case Type::adjacency_multilist:
+			createAdjMultiList(vertices, arcs);
 			break;
 		default:
 			break;
@@ -140,8 +156,8 @@ public:
 			case Type::orthogonal_list:
 				OrthListDFS(visit, node);
 				break;
-			case Type::adjacency_multlist:
-				AdjMultListDFS(visit, node);
+			case Type::adjacency_multilist:
+				AdjMultiListDFS(visit, node);
 				break;
 			default:
 				break;
@@ -159,8 +175,8 @@ public:
 			case Type::orthogonal_list:
 				OrthListBFS(visit, node);
 				break;
-			case Type::adjacency_multlist:
-				AdjMultListBFS(visit, node);
+			case Type::adjacency_multilist:
+				AdjMultiListBFS(visit, node);
 				break;
 			default:
 				break;
@@ -184,8 +200,8 @@ public:
 		case Type::orthogonal_list:
 			destroyOrthList();
 			break;
-		case Type::adjacency_multlist:
-			destroyAdjMultList();
+		case Type::adjacency_multilist:
+			destroyAdjMultiList();
 			break;
 		default:
 			break;
@@ -203,8 +219,8 @@ public:
 		case Type::orthogonal_list:
 			createOrthList(vertices, arcs);
 			break;
-		case Type::adjacency_multlist:
-			createAdjMultList(vertices, arcs);
+		case Type::adjacency_multilist:
+			createAdjMultiList(vertices, arcs);
 			break;
 		default:
 			break;
@@ -224,18 +240,50 @@ public:
 		case Type::orthogonal_list:
 			destroyOrthList();
 			break;
-		case Type::adjacency_multlist:
-			destroyAdjMultList();
+		case Type::adjacency_multilist:
+			destroyAdjMultiList();
 			break;
 		default:
 			break;
+		}
+	}
+
+	SpanningTreeNode<T, U>* Prim(uint32_t node) const
+	{
+		switch (type)
+		{
+		case Type::adjacency_list:
+			return PrimAdjList(node);
+		case Type::reverse_adjacency_list:
+			return PrimReAdjList(node);
+		case Type::adjacency_multilist:
+			return PrimAdjMultiList(node);
+		default:
+			perror("don't support digraph");
+			return nullptr;
+		}
+	}
+
+	LinkedList<HashNode<uint32_t, T>> TopologicalSort() const
+	{
+		switch (type)
+		{
+		case Type::adjacency_list:
+			return TopologicalSortAdjList();
+		case Type::reverse_adjacency_list:
+			return TopologicalSortReAdjList();
+		case Type::orthogonal_list:
+			return TopologicalSortOrthList();
+		default:
+			perror("don't support un-digraph");
+			return LinkedList<HashNode<uint32_t, T>>();
 		}
 	}
 private:
 	Vector<AdjVertexNode<T, U>> adjVertices;
 	Vector<AdjVertexNode<T, U>> reAdjVertices;
 	Vector<OrthVertexNode<T, U>> orthVertices;
-	Vector<AdjMultVertexNode<T, U>> adjMultVertices;
+	Vector<AdjMultVertexNode<T, U>> adjMultiVertices;
 	Type type;
 
 	void createAdjList(Vector<T>& vertices, Vector<Arc<U>>& arcs)
@@ -379,12 +427,12 @@ private:
 	}
 
 	//arcs with two vertices will be treated as an edge, rather than an arc
-	void createAdjMultList(Vector<T>& vertices, Vector<Arc<U>>& edges)
+	void createAdjMultiList(Vector<T>& vertices, Vector<Arc<U>>& edges)
 	{
 		for (uint32_t i = 0; i < vertices.size(); i++)
 		{
 			AdjMultVertexNode<T, U> vertex(vertices[i]);
-			adjMultVertices.push_back(vertex);
+			adjMultiVertices.push_back(vertex);
 		}
 
 		Vector<AdjMultArcNode<U>*> storage(vertices.size());
@@ -393,35 +441,53 @@ private:
 			uint32_t headIndex = edges[i].headVertex;
 			uint32_t tailIndex = edges[i].tailVertex;
 			auto arcNode = new AdjMultArcNode<U>(headIndex, tailIndex, edges[i].information);
-			if (adjMultVertices[headIndex].firstArc == nullptr)
+
+			if (adjMultiVertices[headIndex].firstArc == nullptr)
 			{
-				adjMultVertices[headIndex].firstArc = arcNode;
-				storage[headIndex] = adjMultVertices[headIndex].firstArc;
+				adjMultiVertices[headIndex].firstArc = arcNode;
+				storage[headIndex] = adjMultiVertices[headIndex].firstArc;
 			}
 			else
 			{
-				storage[headIndex]->headLink = arcNode;
-				storage[headIndex] = storage[headIndex]->headLink;
+				if (storage[headIndex]->arcHead == headIndex)
+				{
+					storage[headIndex]->headLink = arcNode;
+					storage[headIndex] = storage[headIndex]->headLink;
+				}
+				else if (storage[headIndex]->arcTail == headIndex)
+				{
+					storage[headIndex]->tailLink = arcNode;
+					storage[headIndex] = storage[headIndex]->tailLink;
+				}
 			}
 
-			if (adjMultVertices[tailIndex].firstArc == nullptr)
+
+			if (adjMultiVertices[tailIndex].firstArc == nullptr)
 			{
-				adjMultVertices[tailIndex].firstArc = arcNode;
-				storage[tailIndex] = adjMultVertices[tailIndex].firstArc;
+				adjMultiVertices[tailIndex].firstArc = arcNode;
+				storage[tailIndex] = adjMultiVertices[tailIndex].firstArc;
 			}
 			else
 			{
-				storage[tailIndex]->tailLink = arcNode;
-				storage[tailIndex] = storage[tailIndex]->tailLink;
+				if (storage[tailIndex]->arcHead == tailIndex)
+				{
+					storage[tailIndex]->headLink = arcNode;
+					storage[tailIndex] = storage[tailIndex]->headLink;
+				}
+				else if (storage[tailIndex]->arcTail == tailIndex)
+				{
+					storage[tailIndex]->tailLink = arcNode;
+					storage[tailIndex] = storage[tailIndex]->tailLink;
+				}
 			}
 		}
 	}
 
-	void destroyAdjMultList()
+	void destroyAdjMultiList()
 	{
-		for (uint32_t i = 0; i < adjMultVertices.size(); i++)
+		for (uint32_t i = 0; i < adjMultiVertices.size(); i++)
 		{
-			AdjMultArcNode<U>* arcNode = adjMultVertices[i].firstArc;
+			AdjMultArcNode<U>* arcNode = adjMultiVertices[i].firstArc;
 			while (arcNode)
 			{
 				AdjMultArcNode<U>* prev = arcNode;
@@ -429,7 +495,7 @@ private:
 				delete prev;
 				prev = nullptr;
 			}
-			adjMultVertices.destroy();
+			adjMultiVertices.destroy();
 		}
 	}
 
@@ -609,9 +675,9 @@ private:
 		}
 	}
 
-	void AdjMultListDFS(void(*visit)(T), uint32_t node) const
+	void AdjMultiListDFS(void(*visit)(T), uint32_t node) const
 	{
-		uint32_t count = adjMultVertices.size();
+		uint32_t count = adjMultiVertices.size();
 		assert(node < count);
 
 		Vector<bool> judgement(false, count);
@@ -621,7 +687,7 @@ private:
 		uint32_t index = node;
 		while (access_count <= count)
 		{
-			const AdjMultVertexNode<T, U>& access_node = adjMultVertices[index];
+			const AdjMultVertexNode<T, U>& access_node = adjMultiVertices[index];
 			visit(access_node.data);
 			access_count++;
 			judgement[index] = true;
@@ -668,9 +734,9 @@ private:
 		}
 	}
 
-	void AdjMultListBFS(void(*visit)(T), uint32_t node) const
+	void AdjMultiListBFS(void(*visit)(T), uint32_t node) const
 	{
-		uint32_t count = adjMultVertices.size();
+		uint32_t count = adjMultiVertices.size();
 		assert(node < count);
 
 		Vector<bool> judgement(false, count);
@@ -683,7 +749,7 @@ private:
 			queue.dequeue();
 			if (!judgement[index])
 			{
-				const AdjMultVertexNode<T, U>& access_node = adjMultVertices[index];
+				const AdjMultVertexNode<T, U>& access_node = adjMultiVertices[index];
 				visit(access_node.data);
 				judgement[index] = true;
 
@@ -699,5 +765,173 @@ private:
 				}
 			}
 		}
+	}
+
+	struct CloseEdge
+	{
+		uint32_t nodeIndex;
+		U weight;
+		CloseEdge() : nodeIndex(UINT32_MAX), weight(U(0)) {}
+		CloseEdge(const uint32_t& index, const U& weight) : nodeIndex(index), weight(weight) {}
+	};
+
+	//minimum cost spanning tree of connected net(undigraph)
+	SpanningTreeNode<T, U>* PrimAdj(const Vector<AdjVertexNode<T, U>>& adj, uint32_t origin) const
+	{
+		uint32_t count = adj.size();
+		assert(origin < count);
+
+		auto root = new SpanningTreeNode<T, U>(origin, adj[origin].data);
+		SpanningTreeNode<T, U>* tree = root;
+
+		//for quickly getting the tree node
+		Vector<SpanningTreeNode<T, U>*> map;
+		map.resize(count);
+		map[origin] = tree;
+
+		HashMap<uint32_t, CloseEdge> closeArcTable;
+		uint32_t node = origin;
+		while (--count)
+		{
+			AdjVertexNode<T, U> cur = adj[node];
+			AdjArcNode<U>* arc = cur.firstArc;
+			//refresh close edge element
+			while (arc != nullptr)
+			{
+				uint32_t index = arc->vertexIndex;
+				if (closeArcTable.count(index))
+				{
+					if (closeArcTable[index].weight > arc->information)
+						closeArcTable[index] = CloseEdge(node, arc->information);
+				}
+				else if (index != origin)
+					closeArcTable.insert(index, CloseEdge(node, arc->information));
+				arc = arc->nextArc;
+			}
+			//find the node of the least weight
+			uint32_t index = closeArcTable.begin()->key;
+			U min_weight;
+			memset(&min_weight, 0xffffffff, sizeof(U));
+			for (auto it : closeArcTable)
+			{
+				if (it.value.weight < min_weight && it.value.weight != U(0))
+				{
+					min_weight = it.value.weight;
+					index = it.key;
+				}
+			}
+			//refresh minimum spinning tree
+			tree = map[closeArcTable[index].nodeIndex];
+			tree->arcsWeight.push_back(closeArcTable[index].weight);
+			closeArcTable[index].nodeIndex = UINT32_MAX;
+			closeArcTable[index].weight = U(0);
+
+			auto tree_node = new SpanningTreeNode<T, U>(index, adj[index].data);
+			tree_node->parent = tree;
+			tree->children.push_back(tree_node);
+			map[index] = tree_node;
+
+			//refresh loop data
+			node = index;
+		}
+		return root;
+	}
+
+	SpanningTreeNode<T, U>* PrimAdjList(uint32_t node) const
+	{
+		return PrimAdj(adjVertices, node);
+	}
+
+	SpanningTreeNode<T, U>* PrimReAdjList(uint32_t node) const
+	{
+		return PrimAdj(reAdjVertices, node);
+	}
+
+	SpanningTreeNode<T, U>* PrimAdjMultiList(uint32_t node) const
+	{
+		uint32_t count = adjMultiVertices.size();
+		assert(node < count);
+
+		auto root = new SpanningTreeNode<T, U>(node, adjMultiVertices[node].data);
+		SpanningTreeNode<T, U>* tree = root;
+
+		//for quickly getting the tree node
+		Vector<SpanningTreeNode<T, U>*> map;
+		map.resize(count);
+		map[node] = tree;
+
+		HashMap<uint32_t, CloseEdge> closeArcTable;
+		uint32_t cur_index = node;
+		while (--count)
+		{
+			AdjMultVertexNode<T, U> cur = adjMultiVertices[cur_index];
+			AdjMultArcNode<U>* arc = cur.firstArc;
+			//refresh close edge element
+			while (arc != nullptr)
+			{
+				//traverse along one direction
+				uint32_t index = arc->arcHead == cur_index ? arc->arcTail : arc->arcHead;
+				if (closeArcTable.count(index))
+				{
+					if (closeArcTable[index].weight > arc->information)
+						closeArcTable[index] = CloseEdge(cur_index, arc->information);
+				}
+				else if (index != node)
+					closeArcTable.insert(index, CloseEdge(cur_index, arc->information));
+				arc = arc->arcHead == cur_index ? arc->headLink : arc->tailLink;
+			}
+			//find the node of the least weight
+			uint32_t index = closeArcTable.begin()->key;
+			U min_weight = U(0);
+			memset(&min_weight, 0xffffffff, sizeof(U));
+			for (auto it : closeArcTable)
+			{
+				if (it.value.weight < min_weight && it.value.weight != U(0))
+				{
+					min_weight = it.value.weight;
+					index = it.key;
+				}
+			}
+			//refresh minimum spinning tree
+			tree = map[closeArcTable[index].nodeIndex];
+			tree->arcsWeight.push_back(closeArcTable[index].weight);
+			closeArcTable[index].nodeIndex = UINT32_MAX;
+			closeArcTable[index].weight = U(0);
+
+			auto tree_node = new SpanningTreeNode<T, U>(index, adjMultiVertices[index].data);
+			tree_node->parent = tree;
+			tree->children.push_back(tree_node);
+			map[index] = tree_node;
+
+			//refresh loop data
+			cur_index = index;
+		}
+		return root;
+	}
+
+	LinkedList<HashNode<uint32_t, T>> TopologicalSortAdjList() const
+	{
+
+	}
+
+	LinkedList<HashNode<uint32_t, T>> TopologicalSortReAdjList() const
+	{
+        Vector<bool> access_storage(reAdjVertices.size());
+        uint32_t index = UINT32_MAX;
+		for(uint32_t i = 0; i < reAdjVertices.size(); i++)
+        {
+            if(reAdjVertices[i].firstArc == nullptr)
+            {
+                index = i;
+                break;
+            }
+        }
+        if(index == UINT32_MAX)
+			
+	}
+
+	LinkedList<HashNode<uint32_t, T>> TopologicalSortOrthList() const
+	{
+
 	}
 };

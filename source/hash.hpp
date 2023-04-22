@@ -93,6 +93,7 @@ public:
 				ptr = node->next->data;
 			else
 			{
+                pointer cur = ptr;
 				for (uint32_t i = index + 1; i < hash->capacity; i++)
 				{
 					if (!hash->buckets[i].empty())
@@ -101,6 +102,8 @@ public:
 						break;
 					}
 				}
+                if(cur == ptr)
+                    ptr = node->next->data;
 			}
 			return *this;
 		}
@@ -197,12 +200,22 @@ public:
 
 	const Iterator cend() const
 	{
-		return Iterator(buckets[capacity - 1].end()->data, this);
+        for (uint32_t i = capacity - 1; i >= capacity; i--)
+        {
+            if (!buckets[i].empty())
+                return Iterator(buckets[i].end()->data, this);
+        }
+        return Iterator(buckets[capacity - 1].end()->data, this);
 	}
 
 	Iterator end()
 	{
-		return Iterator(buckets[capacity - 1].end()->data, this);
+        for (uint32_t i = capacity - 1; i >= capacity; i--)
+        {
+            if (!buckets[i].empty())
+                return Iterator(buckets[i].end()->data, this);
+        }
+        return Iterator(buckets[capacity - 1].end()->data, this);
 	}
 
 	const Iterator cbegin() const

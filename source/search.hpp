@@ -1816,7 +1816,7 @@ private:
 			else if (cur_parent != root && cur_parent->num < ((Num + 1) >> 1) - 1)
 				merge_adjust(cur_parent, cur_parent->num);
 
-			cur->destory();
+			cur->destroy();
 			delete cur;
 			cur = nullptr;
 		}
@@ -1842,7 +1842,7 @@ private:
 			else if (cur_parent != root && cur_parent->num < ((Num + 1) >> 1) - 1)
 				merge_adjust(cur_parent, cur_parent->num);
 
-			cur->destory();
+			cur->destroy();
 			delete cur;
 			cur = nullptr;
 		}
