@@ -271,7 +271,7 @@ public:
 		}
 	}
 
-	LinkedList<HashNode<uint32_t, T>> TopologicalSort() const
+	LinkedList<HashNode<uint32_t, T>> TopologicalSort()
 	{
 		switch (type)
 		{
@@ -293,39 +293,6 @@ private:
 	Vector<OrthVertexNode<T, U>> orthVertices;
 	Vector<AdjMultVertexNode<T, U>> adjMultiVertices;
 	Type type;
-
-    template<typename Ty>
-    void clone(Ty& ty)
-    {
-        Vector<T> vertices;
-        Vector<Arc<U>> arcs;
-        reconstructFromAdjMatrix(vertices, arcs);
-
-        if(std::is_same<Ty, Vector<AdjVertexNode<T, U>>>::value)
-            createAdjList(vertices, arcs, ty);
-        else if(std::is_same<Ty, Vector<OrthVertexNode<T, U>>>::value)
-            createOrthList(vertices, arcs, ty);
-        else
-            createAdjMultiList(vertices, arcs, ty);
-
-//        switch (type)
-//        {
-//            case Type::adjacency_list:
-//                createAdjList(vertices, arcs, ty);
-//                break;
-//            case Type::reverse_adjacency_list:
-//                createReAdjList(vertices, arcs, ty);
-//                break;
-//            case Type::orthogonal_list:
-//                createOrthList(vertices, arcs, ty);
-//                break;
-//            case Type::adjacency_multilist:
-//                createAdjMultiList(vertices, arcs, ty);
-//                break;
-//            default:
-//                break;
-//        }
-    }
 
     void createAdjMatrix(Vector<T>& vertices, Vector<Arc<U>>& arcs)
     {
@@ -633,7 +600,7 @@ private:
 		}
 	}
 
-	void OrthListDFS(Vector<OrthVertexNode<T, U>>& orth, void(*visit)(T), uint32_t node) const
+	void OrthListDFS(const Vector<OrthVertexNode<T, U>>& orth, void(*visit)(T), uint32_t node) const
 	{
 		uint32_t count = orth.size();
 		assert(node < count);
@@ -682,7 +649,7 @@ private:
 		}
 	}
 
-	void OrthListBFS(Vector<OrthVertexNode<T, U>> orth, void(*visit)(T), uint32_t node) const
+	void OrthListBFS(const Vector<OrthVertexNode<T, U>>& orth, void(*visit)(T), uint32_t node) const
 	{
 		uint32_t count = orth.size();
 		assert(node < count);
@@ -711,7 +678,7 @@ private:
 		}
 	}
 
-	void AdjMultiListDFS(Vector<AdjMultVertexNode<T, U>> adjMulti, void(*visit)(T), uint32_t node) const
+	void AdjMultiListDFS(const Vector<AdjMultVertexNode<T, U>>& adjMulti, void(*visit)(T), uint32_t node) const
 	{
 		uint32_t count = adjMulti.size();
 		assert(node < count);
@@ -770,7 +737,7 @@ private:
 		}
 	}
 
-	void AdjMultiListBFS(Vector<AdjMultVertexNode<T, U>>& adjMulti, void(*visit)(T), uint32_t node) const
+	void AdjMultiListBFS(const Vector<AdjMultVertexNode<T, U>>& adjMulti, void(*visit)(T), uint32_t node) const
 	{
 		uint32_t count = adjMulti.size();
 		assert(node < count);
@@ -933,7 +900,7 @@ private:
 		return root;
 	}
 
-	LinkedList<HashNode<uint32_t, T>> TopologicalSortAdjList() const
+	LinkedList<HashNode<uint32_t, T>> TopologicalSortAdjList()
 	{
         Vector<T> vertices;
         Vector<Arc<U>> arcs;
@@ -941,9 +908,11 @@ private:
 
         Vector<AdjVertexNode<T, U>> adj;
         createAdjList(vertices, arcs, adj);
+
+        return TopologicalSortAdj(adj, false);
 	}
 
-	LinkedList<HashNode<uint32_t, T>> TopologicalSortReAdjList() const
+	LinkedList<HashNode<uint32_t, T>> TopologicalSortReAdjList()
 	{
         Vector<T> vertices;
         Vector<Arc<U>> arcs;
@@ -952,13 +921,18 @@ private:
         Vector<AdjVertexNode<T, U>> reAdj;
         createReAdjList(vertices, arcs, reAdj);
 
+        return TopologicalSortAdj(reAdj, true);
+	}
+
+    LinkedList<HashNode<uint32_t, T>> TopologicalSortAdj(Vector<AdjVertexNode<T, U>>& adj, bool reverse)
+    {
         LinkedList<HashNode<uint32_t, T>> ret;
-        while(!reAdj.empty())
+        while(!adj.empty())
         {
             uint32_t index = std::numeric_limits<uint32_t>::max();
-            for(uint32_t i = 0; i < reAdj.size(); i++)
+            for(uint32_t i = 0; i < adj.size(); i++)
             {
-                if(reAdj[i].firstArc == nullptr)
+                if(adj[i].firstArc == nullptr)
                 {
                     index = i;
                     break;
@@ -966,9 +940,13 @@ private:
             }
             if(index != std::numeric_limits<uint32_t>::max())
             {
-                ret.push_back(HashNode<uint32_t, T>(index, reAdj[index].data));
-                reAdj.erase(index);
-                for(auto& re : reAdj)
+                if(reverse)
+                    ret.push_back(HashNode<uint32_t, T>(index, adj[index].data));
+                else
+                    ret.push_front(HashNode<uint32_t, T>(index, adj[index].data));
+
+                adj.erase(index);
+                for(auto& re : adj)
                 {
                     AdjArcNode<U>* first = re.firstArc;
                     if(first->vertexIndex == index)
@@ -994,11 +972,10 @@ private:
                 }
             }
             else
-                destroyAdj(reAdj);
+                destroyAdj(adj);
         }
-
         return ret;
-	}
+    }
 
 	LinkedList<HashNode<uint32_t, T>> TopologicalSortOrthList() const
 	{

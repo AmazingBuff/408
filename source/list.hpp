@@ -8,7 +8,7 @@ struct List
 	T data;
 	List<T>* next = nullptr;
 	explicit List(const T& element) : data(element) { }
-	List() : data(0) { }
+    List() { memset(this, 0, sizeof(List));}
 };
 
 template<typename T>

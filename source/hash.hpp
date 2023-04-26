@@ -8,7 +8,7 @@ struct HashNode
 {
 	Ty_Key key;
 	Ty_Val value;
-	HashNode() { memset(this, 0, sizeof(HashNode<Ty_Key, Ty_Val>)); }
+	HashNode() { memset(this, 0, sizeof(HashNode));}
 	HashNode(const Ty_Key& key, const Ty_Val val) : key(key), value(val) {}
     HashNode(const HashNode& other)
     {

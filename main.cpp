@@ -29,6 +29,8 @@ int main()
 
     //graph.reset(Graph<char, uint8_t>::Type::orthogonal_list);
 
+    LinkedList<HashNode<uint32_t, char>> ret =  graph.TopologicalSort();
+
     SpanningTreeNode<char, uint8_t>* nde = graph.Prim(0);
 
 	Vector<Arc<uint8_t>> single_arcs = { {0, 1, 6}, {0, 2, 1}, {0, 3, 5},
