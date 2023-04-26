@@ -105,6 +105,7 @@ struct Graph
 public:
 	enum class Type : uint8_t
 	{
+        //adjacency_matrix,
 		adjacency_list,
 		reverse_adjacency_list,
 		//only for digraph
@@ -124,20 +125,24 @@ public:
 		switch (type)
 		{
 		case Type::adjacency_list:
-			createAdjList(vertices, arcs);
+			createAdjList(vertices, arcs, adjVertices);
 			break;
 		case Type::reverse_adjacency_list:
-			createReAdjList(vertices, arcs);
+			createReAdjList(vertices, arcs, reAdjVertices);
 			break;
 		case Type::orthogonal_list:
-			createOrthList(vertices, arcs);
+			createOrthList(vertices, arcs, orthVertices);
 			break;
 		case Type::adjacency_multilist:
-			createAdjMultiList(vertices, arcs);
+			createAdjMultiList(vertices, arcs, adjMultiVertices);
 			break;
 		default:
 			break;
 		}
+
+        Vector<AdjVertexNode<T, U>> adj;
+        clone<Vector<AdjVertexNode<T, U>>>(adj);
+        createAdjMatrix(vertices, arcs);
 	}
 
 	void access(const Mode mode, void(*visit)(T), uint32_t node = 0)
@@ -187,7 +192,7 @@ public:
 		}
 	}
 
-	void reset(Type type_, Vector<T>& vertices, Vector<Arc<U>>& arcs)
+	void reset(Type type_)
 	{
 		switch (this->type)
 		{
@@ -207,20 +212,24 @@ public:
 			break;
 		}
 
+        Vector<T> vertices;
+        Vector<Arc<U>> arcs;
+        reconstructFromAdjMatrix(vertices, arcs);
+
 		this->type = type_;
 		switch (type)
 		{
 		case Type::adjacency_list:
-			createAdjList(vertices, arcs);
+			createAdjList(vertices, arcs, adjVertices);
 			break;
 		case Type::reverse_adjacency_list:
-			createReAdjList(vertices, arcs);
+			createReAdjList(vertices, arcs, reAdjVertices);
 			break;
 		case Type::orthogonal_list:
-			createOrthList(vertices, arcs);
+			createOrthList(vertices, arcs, orthVertices);
 			break;
 		case Type::adjacency_multilist:
-			createAdjMultiList(vertices, arcs);
+			createAdjMultiList(vertices, arcs, adjMultiVertices);
 			break;
 		default:
 			break;
@@ -280,18 +289,73 @@ public:
 		}
 	}
 private:
+    HashNode<Vector<T>, Vector<Vector<U>>> adjMatrix;
 	Vector<AdjVertexNode<T, U>> adjVertices;
 	Vector<AdjVertexNode<T, U>> reAdjVertices;
 	Vector<OrthVertexNode<T, U>> orthVertices;
 	Vector<AdjMultVertexNode<T, U>> adjMultiVertices;
 	Type type;
 
-	void createAdjList(Vector<T>& vertices, Vector<Arc<U>>& arcs)
+    template<typename Ty>
+    void clone(Ty& ty)
+    {
+        Vector<T> vertices;
+        Vector<Arc<U>> arcs;
+        reconstructFromAdjMatrix(vertices, arcs);
+
+        switch (type)
+        {
+            case Type::adjacency_list:
+                createAdjList(vertices, arcs, ty);
+                break;
+            case Type::reverse_adjacency_list:
+                createReAdjList(vertices, arcs, ty);
+                break;
+            case Type::orthogonal_list:
+                createOrthList(vertices, arcs, ty);
+                break;
+            case Type::adjacency_multilist:
+                createAdjMultiList(vertices, arcs, ty);
+                break;
+            default:
+                break;
+        }
+    }
+
+    void createAdjMatrix(Vector<T>& vertices, Vector<Arc<U>>& arcs)
+    {
+        adjMatrix.key = vertices;
+        adjMatrix.value.resize(vertices.size());
+        for(auto& row : adjMatrix.value)
+        {
+            row.resize(vertices.size());
+            memset(row.statistics(), std::numeric_limits<U>::max(), sizeof(U) * vertices.size());
+        }
+
+        for(auto& arc : arcs)
+            adjMatrix.value[arc.tailVertex][arc.headVertex] = arc.information;
+    }
+
+    void reconstructFromAdjMatrix(Vector<T>& vertices, Vector<Arc<U>>& arcs) const
+    {
+        vertices = adjMatrix.key;
+        for(uint32_t i = 0; i < adjMatrix.value.size(); i++)
+        {
+            for(uint32_t j = 0; j < adjMatrix.value.size(); j++)
+            {
+                if(adjMatrix.value[i][j] != std::numeric_limits<U>::max())
+                    arcs.push_back(Arc<U>(j, i, adjMatrix.value[i][j]));
+            }
+        }
+    }
+
+	void createAdjList(Vector<T>& vertices, Vector<Arc<U>>& arcs, Vector<AdjVertexNode<T, U>>& adj)
 	{
+        adj.destroy();
 		for (uint32_t i = 0; i < vertices.size(); i++)
 		{
 			AdjVertexNode<T, U> vertex(vertices[i]);
-			adjVertices.push_back(vertex);
+			adj.push_back(vertex);
 		}
 
 		Vector<AdjArcNode<U>*> storage(vertices.size());
@@ -299,10 +363,10 @@ private:
 		{
 			uint32_t vertexIndex = arcs[i].tailVertex;
 			auto arc_node = new AdjArcNode<U>(arcs[i].headVertex, arcs[i].information);
-			if (adjVertices[vertexIndex].firstArc == nullptr)
+			if (adj[vertexIndex].firstArc == nullptr)
 			{
-				adjVertices[vertexIndex].firstArc = arc_node;
-				storage[vertexIndex] = adjVertices[vertexIndex].firstArc;
+				adj[vertexIndex].firstArc = arc_node;
+				storage[vertexIndex] = adj[vertexIndex].firstArc;
 			}
 			else
 			{
@@ -328,12 +392,13 @@ private:
 		adjVertices.destroy();
 	}
 
-	void createReAdjList(Vector<T>& vertices, Vector<Arc<U>>& arcs)
+	void createReAdjList(Vector<T>& vertices, Vector<Arc<U>>& arcs, Vector<AdjVertexNode<T, U>>& reAdj)
 	{
+        reAdj.destroy();
 		for (uint32_t i = 0; i < vertices.size(); i++)
 		{
 			AdjVertexNode<T, U> vertex(vertices[i]);
-			reAdjVertices.push_back(vertex);
+			reAdj.push_back(vertex);
 		}
 
 		Vector<AdjArcNode<U>*> storage(vertices.size());
@@ -341,10 +406,10 @@ private:
 		{
 			uint32_t vertexIndex = arcs[i].headVertex;
 			auto arc_node = new AdjArcNode<U>(arcs[i].headVertex, arcs[i].information);
-			if (reAdjVertices[vertexIndex].firstArc == nullptr)
+			if (reAdj[vertexIndex].firstArc == nullptr)
 			{
-				reAdjVertices[vertexIndex].firstArc = arc_node;
-				storage[vertexIndex] = reAdjVertices[vertexIndex].firstArc;
+				reAdj[vertexIndex].firstArc = arc_node;
+				storage[vertexIndex] = reAdj[vertexIndex].firstArc;
 			}
 			else
 			{
@@ -370,12 +435,13 @@ private:
 		reAdjVertices.destroy();
 	}
 
-	void createOrthList(Vector<T>& vertices, Vector<Arc<U>>& arcs)
+	void createOrthList(Vector<T>& vertices, Vector<Arc<U>>& arcs, Vector<OrthVertexNode<T, U>>& orth)
 	{
+        orth.destroy();
 		for (uint32_t i = 0; i < vertices.size(); i++)
 		{
 			OrthVertexNode<T, U> vertex(vertices[i]);
-			orthVertices.push_back(vertex);
+			orth.push_back(vertex);
 		}
 
 		Vector<OrthArcNode<U>*> headStorage(vertices.size());
@@ -385,10 +451,10 @@ private:
 			uint32_t headIndex = arcs[i].headVertex;
 			uint32_t tailIndex = arcs[i].tailVertex;
 			auto arcNode = new OrthArcNode<U>(headIndex, tailIndex, arcs[i].information);
-			if (orthVertices[headIndex].firstIn == nullptr)
+			if (orth[headIndex].firstIn == nullptr)
 			{
-				orthVertices[headIndex].firstIn = arcNode;
-				headStorage[headIndex] = orthVertices[headIndex].firstIn;
+				orth[headIndex].firstIn = arcNode;
+				headStorage[headIndex] = orth[headIndex].firstIn;
 			}
 			else
 			{
@@ -396,10 +462,10 @@ private:
 				headStorage[headIndex] = headStorage[headIndex]->headLink;
 			}
 
-			if (orthVertices[tailIndex].firstOut == nullptr)
+			if (orth[tailIndex].firstOut == nullptr)
 			{
-				orthVertices[tailIndex].firstOut = arcNode;
-				tailStorage[tailIndex] = orthVertices[tailIndex].firstOut;
+				orth[tailIndex].firstOut = arcNode;
+				tailStorage[tailIndex] = orth[tailIndex].firstOut;
 			}
 			else
 			{
@@ -427,12 +493,13 @@ private:
 	}
 
 	//arcs with two vertices will be treated as an edge, rather than an arc
-	void createAdjMultiList(Vector<T>& vertices, Vector<Arc<U>>& edges)
+	void createAdjMultiList(Vector<T>& vertices, Vector<Arc<U>>& edges, Vector<AdjMultVertexNode<T, U>>& adjMulti)
 	{
+        adjMulti.destroy();
 		for (uint32_t i = 0; i < vertices.size(); i++)
 		{
 			AdjMultVertexNode<T, U> vertex(vertices[i]);
-			adjMultiVertices.push_back(vertex);
+			adjMulti.push_back(vertex);
 		}
 
 		Vector<AdjMultArcNode<U>*> storage(vertices.size());
@@ -442,10 +509,10 @@ private:
 			uint32_t tailIndex = edges[i].tailVertex;
 			auto arcNode = new AdjMultArcNode<U>(headIndex, tailIndex, edges[i].information);
 
-			if (adjMultiVertices[headIndex].firstArc == nullptr)
+			if (adjMulti[headIndex].firstArc == nullptr)
 			{
-				adjMultiVertices[headIndex].firstArc = arcNode;
-				storage[headIndex] = adjMultiVertices[headIndex].firstArc;
+				adjMulti[headIndex].firstArc = arcNode;
+				storage[headIndex] = adjMulti[headIndex].firstArc;
 			}
 			else
 			{
@@ -775,7 +842,7 @@ private:
 		CloseEdge(const uint32_t& index, const U& weight) : nodeIndex(index), weight(weight) {}
 	};
 
-	//minimum cost spanning tree of connected net(undigraph)
+	//minimum cost spanning tree of connected net(un-digraph)
 	SpanningTreeNode<T, U>* PrimAdj(const Vector<AdjVertexNode<T, U>>& adj, uint32_t origin) const
 	{
 		uint32_t count = adj.size();
@@ -810,8 +877,7 @@ private:
 			}
 			//find the node of the least weight
 			uint32_t index = closeArcTable.begin()->key;
-			U min_weight;
-			memset(&min_weight, 0xffffffff, sizeof(U));
+			U min_weight = std::numeric_limits<U>::max();
 			for (auto it : closeArcTable)
 			{
 				if (it.value.weight < min_weight && it.value.weight != U(0))
@@ -916,6 +982,8 @@ private:
 
 	LinkedList<HashNode<uint32_t, T>> TopologicalSortReAdjList() const
 	{
+        Vector<AdjVertexNode<T, U>> adj;
+        clone(adj);
         Vector<bool> access_storage(reAdjVertices.size());
         uint32_t index = UINT32_MAX;
 		for(uint32_t i = 0; i < reAdjVertices.size(); i++)
@@ -927,6 +995,9 @@ private:
             }
         }
         if(index == UINT32_MAX)
+        {
+
+        }
 			
 	}
 

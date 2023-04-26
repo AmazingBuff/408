@@ -27,6 +27,8 @@ int main()
                                {5, 2, 4}, {5, 3, 2}, {5, 4, 6}};
 	Graph<char, uint8_t> graph(Graph<char, uint8_t>::Type::adjacency_list, vertices, arcs);
 
+    //graph.reset(Graph<char, uint8_t>::Type::orthogonal_list);
+
     SpanningTreeNode<char, uint8_t>* nde = graph.Prim(0);
 
 	Vector<Arc<uint8_t>> single_arcs = { {0, 1, 6}, {0, 2, 1}, {0, 3, 5},
