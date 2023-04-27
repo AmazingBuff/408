@@ -39,6 +39,11 @@ int main()
                                          {3, 5, 2},
                                          {4, 5, 6} };
 
+    Vector<Arc<uint8_t>> topological = {{0, 1, 1}, {0, 2, 1}, {0, 3, 1},
+                                        {2, 1, 1}, {2, 5, 1},
+                                        {3, 5, 1},
+                                        {4, 3, 1}, {4, 5, 1},};
+
 	auto start_time = std::chrono::high_resolution_clock::now();
 	graph.access(Graph<char, uint8_t>::Mode::depth_first_search, visit, 1);
 	auto end_time = std::chrono::high_resolution_clock::now();
@@ -51,9 +56,9 @@ int main()
 	graph2.access(Graph<char, uint8_t>::Mode::broadth_first_search, visit, 1);
 	std::cout << std::endl;
 
-	Graph<char, uint8_t> graph3(Graph<char, uint8_t>::Type::adjacency_multilist, vertices, single_arcs);
+	Graph<char, uint8_t> graph3(Graph<char, uint8_t>::Type::orthogonal_list, vertices, topological);
 
-    SpanningTreeNode<char, uint8_t>* ndedd = graph3.Prim(0);
+    LinkedList<HashNode<uint32_t, char>> ret3 =  graph3.TopologicalSort();
 
 	graph3.access(Graph<char, uint8_t>::Mode::depth_first_search, visit, 1);
 	std::cout << std::endl;

@@ -75,12 +75,12 @@ struct AdjMultVertexNode
 template<typename T>
 struct Arc
 {
+    uint32_t tailVertex;
 	uint32_t headVertex;
-	uint32_t tailVertex;
 	T information;
-	Arc() : headVertex(0), tailVertex(0), information(T()) { }
-	Arc(const uint32_t& head, const uint32_t& tail, const T& info = 0)
-		: headVertex(head), tailVertex(tail), information(info) { }
+	Arc() : tailVertex(0), headVertex(0), information(T()) { }
+	Arc(const uint32_t& tail, const uint32_t& head, const T& info = T())
+		: tailVertex(tail), headVertex(head), information(info) { }
 };
 
 typedef Arc<uint32_t> ArcWeight;
@@ -316,7 +316,7 @@ private:
             for(uint32_t j = 0; j < adjMatrix.value.size(); j++)
             {
                 if(adjMatrix.value[i][j] != std::numeric_limits<U>::max())
-                    arcs.push_back(Arc<U>(j, i, adjMatrix.value[i][j]));
+                    arcs.push_back(Arc<U>(i, j, adjMatrix.value[i][j]));
             }
         }
     }
@@ -774,7 +774,7 @@ private:
 	{
 		uint32_t nodeIndex;
 		U weight;
-		CloseEdge() : nodeIndex(UINT32_MAX), weight(U(0)) {}
+		CloseEdge() : nodeIndex(std::numeric_limits<uint32_t>::max()), weight(U()) {}
 		CloseEdge(const uint32_t& index, const U& weight) : nodeIndex(index), weight(weight) {}
 	};
 
@@ -816,7 +816,7 @@ private:
 			U min_weight = std::numeric_limits<U>::max();
 			for (auto it : closeArcTable)
 			{
-				if (it.value.weight < min_weight && it.value.weight != U(0))
+				if (it.value.weight < min_weight && it.value.weight != U())
 				{
 					min_weight = it.value.weight;
 					index = it.key;
@@ -826,7 +826,7 @@ private:
 			tree = map[closeArcTable[index].nodeIndex];
 			tree->arcsWeight.push_back(closeArcTable[index].weight);
 			closeArcTable[index].nodeIndex = std::numeric_limits<uint32_t>::max();
-			closeArcTable[index].weight = U(0);
+			closeArcTable[index].weight = U();
 
 			auto tree_node = new SpanningTreeNode<T, U>(index, adj[index].data);
 			tree_node->parent = tree;
@@ -877,7 +877,7 @@ private:
 			U min_weight = std::numeric_limits<U>::max();
 			for (auto it : closeArcTable)
 			{
-				if (it.value.weight < min_weight && it.value.weight != U(0))
+				if (it.value.weight < min_weight && it.value.weight != U())
 				{
 					min_weight = it.value.weight;
 					index = it.key;
@@ -887,7 +887,7 @@ private:
 			tree = map[closeArcTable[index].nodeIndex];
 			tree->arcsWeight.push_back(closeArcTable[index].weight);
 			closeArcTable[index].nodeIndex = std::numeric_limits<uint32_t>::max();
-			closeArcTable[index].weight = U(0);
+			closeArcTable[index].weight = U();
 
 			auto tree_node = new SpanningTreeNode<T, U>(index, adjMulti[index].data);
 			tree_node->parent = tree;
@@ -932,7 +932,7 @@ private:
             uint32_t index = std::numeric_limits<uint32_t>::max();
             for(uint32_t i = 0; i < adj.size(); i++)
             {
-                if(adj[i].firstArc == nullptr)
+                if(adj[i].data != T() && adj[i].firstArc == nullptr)
                 {
                     index = i;
                     break;
@@ -945,28 +945,31 @@ private:
                 else
                     ret.push_front(HashNode<uint32_t, T>(index, adj[index].data));
 
-                adj.erase(index);
+                adj[index] = AdjVertexNode<T, U>();
                 for(auto& re : adj)
                 {
                     AdjArcNode<U>* first = re.firstArc;
-                    if(first->vertexIndex == index)
+                    if(first != nullptr)
                     {
-                        re.firstArc = first->nextArc;
-                        delete first;
-                    }
-                    else
-                    {
-                        while(first->nextArc != nullptr)
+                        if(first->vertexIndex == index)
                         {
-                            AdjArcNode<U>* cur = first->nextArc;
-                            if(cur->vertexIndex == index)
+                            re.firstArc = first->nextArc;
+                            delete first;
+                        }
+                        else
+                        {
+                            while(first->nextArc != nullptr)
                             {
-                                first->nextArc = cur->nextArc;
-                                delete cur;
-                                break;
+                                AdjArcNode<U>* cur = first->nextArc;
+                                if(cur->vertexIndex == index)
+                                {
+                                    first->nextArc = cur->nextArc;
+                                    delete cur;
+                                    break;
+                                }
+                                else
+                                    first = first->nextArc;
                             }
-                            else
-                                first = first->nextArc;
                         }
                     }
                 }
@@ -977,8 +980,64 @@ private:
         return ret;
     }
 
-	LinkedList<HashNode<uint32_t, T>> TopologicalSortOrthList() const
+	LinkedList<HashNode<uint32_t, T>> TopologicalSortOrthList()
 	{
+        Vector<T> vertices;
+        Vector<Arc<U>> arcs;
+        reconstructFromAdjMatrix(vertices, arcs);
 
+        Vector<OrthVertexNode<T, U>> orth;
+        createOrthList(vertices, arcs, orth);
+
+        LinkedList<HashNode<uint32_t, T>> ret;
+        while(!orth.empty())
+        {
+            uint32_t index = std::numeric_limits<uint32_t>::max();
+            for(uint32_t i = 0; i < orth.size(); i++)
+            {
+                if(orth[i].data != T() && orth[i].firstIn == nullptr)
+                {
+                    index = i;
+                    break;
+                }
+            }
+            if(index != std::numeric_limits<uint32_t>::max())
+            {
+                ret.push_back(HashNode<uint32_t, T>(index, orth[index].data));
+
+                //directly reset will not cause memory leaking
+                orth[index] = OrthVertexNode<T, U>();
+                for(auto& re : orth)
+                {
+                    OrthArcNode<U>* first = re.firstIn;
+                    if(first != nullptr)
+                    {
+                        if(first->arcTail == index)
+                        {
+                            re.firstIn = first->headLink;
+                            delete first;
+                        }
+                        else
+                        {
+                            while(first->headLink != nullptr)
+                            {
+                                OrthArcNode<U>* cur = first->headLink;
+                                if(cur->arcTail == index)
+                                {
+                                    first->headLink = cur->headLink;
+                                    delete cur;
+                                    break;
+                                }
+                                else
+                                    first = first->headLink;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+                destroyOrthList(orth);
+        }
+        return ret;
 	}
 };
