@@ -1,7 +1,8 @@
+#include"search.hpp"
 
 
-template<typename T>
-void quickSort(T* arr, int left, int right, bool(*compare_lesser)(T,T))
+template<typename T, typename Compare = CompareLess<T>>
+void quickSort(T* arr, int left, int right)
 {
     if(left >= right)
         return;
@@ -12,7 +13,7 @@ void quickSort(T* arr, int left, int right, bool(*compare_lesser)(T,T))
     {
         if(switch_)
         {
-            if(compare_lesser(arr[tail], arr[head]))
+            if(Compare()(arr[tail], arr[head]))
             {
                 T tmp = arr[head];
                 arr[head] = arr[tail];
@@ -25,7 +26,7 @@ void quickSort(T* arr, int left, int right, bool(*compare_lesser)(T,T))
         }
         else
         {
-            if(compare_lesser(arr[tail], arr[head]))
+            if(Compare()(arr[tail], arr[head]))
             {
                 T tmp = arr[head];
                 arr[head] = arr[tail];
@@ -37,6 +38,6 @@ void quickSort(T* arr, int left, int right, bool(*compare_lesser)(T,T))
                 head++;
         }
     }
-    quickSort(arr, left, head - 1, compare_lesser);
-    quickSort(arr, tail + 1, right, compare_lesser);
+    quickSort(arr, left, head - 1);
+    quickSort(arr, tail + 1, right);
 }

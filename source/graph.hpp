@@ -190,7 +190,7 @@ public:
 		}
 	}
 
-	void reset(Type type_)
+	void switchType(Type type_)
 	{
         switch (type)
         {
@@ -233,6 +233,48 @@ public:
 			break;
 		}
 	}
+
+    void reset(Type type_, Vector<T>& vertices, Vector<Arc<U>>& arcs)
+    {
+        switch (type)
+        {
+            case Type::adjacency_list:
+                destroyAdj(adjVertices);
+                break;
+            case Type::reverse_adjacency_list:
+                destroyAdj(reAdjVertices);
+                break;
+            case Type::orthogonal_list:
+                destroyOrthList(orthVertices);
+                break;
+            case Type::adjacency_multilist:
+                destroyAdjMultiList(adjMultiVertices);
+                break;
+            default:
+                break;
+        }
+
+        type = type_;
+        switch (type)
+        {
+            case Type::adjacency_list:
+                createAdjList(vertices, arcs, adjVertices);
+                break;
+            case Type::reverse_adjacency_list:
+                createReAdjList(vertices, arcs, reAdjVertices);
+                break;
+            case Type::orthogonal_list:
+                createOrthList(vertices, arcs, orthVertices);
+                break;
+            case Type::adjacency_multilist:
+                createAdjMultiList(vertices, arcs, adjMultiVertices);
+                break;
+            default:
+                break;
+        }
+
+        createAdjMatrix(vertices, arcs);
+    }
 
 	~Graph()
 	{
