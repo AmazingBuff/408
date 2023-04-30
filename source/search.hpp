@@ -4,17 +4,27 @@
 #include"hash.hpp"
 #include"stack.hpp"
 
-template<typename T, typename U>
-int BinarySearch(const U& container, const T& target)
+template<typename T>
+struct CompareLess
+{
+    bool operator()(const T& a, const T& b) const
+    {
+        return a < b;
+    }
+};
+
+
+template<typename T, typename Compare = CompareLess<T>>
+int binarySearch(const Vector<T>& container, const T& target)
 {
 	int left = 0;
 	int right = container.size() - 1;
 	while (left <= right)
 	{
 		int middle = (left + right) >> 1;
-		if (target > container[middle])
+		if (Compare()(container[middle], target))
 			left = middle + 1;
-		else if (target < container[middle])
+		else if (Compare()(target, container[middle]))
 			right = middle - 1;
 		else
 			return middle;
@@ -22,29 +32,21 @@ int BinarySearch(const U& container, const T& target)
 	return -1;
 }
 
-template<typename T, typename U>
-int BinarySearch(const U& container, const T& target, const int& left, const int& right)
+
+template<typename T, typename Compare = CompareLess<T>>
+int binarySearch(const Vector<T>& container, const T& target, const int& left, const int& right)
 {
 	if (left > right)
 		return -1;
 	int middle = (left + right) >> 1;
-	if (target > container[middle])
-		return BinarySearch(container, target, middle + 1, right);
-	else if (target < container[middle])
-		return BinarySearch(container, target, left, middle - 1);
+	if (Compare()(container[middle], target))
+		return binarySearch(container, target, middle + 1, right);
+	else if (Compare()(target, container[middle]))
+		return binarySearch(container, target, left, middle - 1);
 	else
 		return middle;
 }
 
-
-template<typename T>
-struct CompareLess
-{
-	bool operator()(const T& a, const T& b) const
-	{
-		return a < b;
-	}
-};
 
 
 template<typename Ty_Key, typename Ty_Val, typename Compare = CompareLess<Ty_Key>, typename Pred = Equal_To<Ty_Key>>

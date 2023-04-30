@@ -6,6 +6,7 @@
 #include<initializer_list>
 #include<cstdint>
 #include<algorithm>
+#include<limits>
 
 template<typename T>
 struct Vector
@@ -261,20 +262,20 @@ public:
 		return data;
 	}
 
+    const T* begin() const
+    {
+        return data;
+    }
+
 	T* end()
 	{
 		return data + length;
 	}
 
-	const T* cbegin() const
-	{
-		return data;
-	}
-
-	const T* cend() const
-	{
-		return data + length;
-	}
+    const T* end() const
+    {
+        return data + length;
+    }
 
 	T& operator[](const uint32_t& index)
 	{

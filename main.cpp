@@ -1,6 +1,7 @@
 #include<iostream>
 #include"graph.hpp"
 #include"search.hpp"
+#include"sort.hpp"
 #include<chrono>
 #include<map>
 
@@ -197,6 +198,70 @@ int main()
 	HashNode<uint32_t, char> node = *it;
 
 	std::cout << "hello" << it->key << it->value << std::endl;
+
+
+    Vector<uint32_t> arrr = {4,6,1,4,6,8,11,10,45,24,3,4,1,4,66,1,3,5,56,22};
+    Vector<uint32_t> arrr2 = {4,6,1,4,6,8,11,10,45,24,3,4,1,4,66,1,3,5,56,22};
+    Vector<uint32_t> arrr3 = {4,6,1,4,6,8,11,10,45,24,3,4,1,4,66,1,3,5,56,22};
+    Vector<uint32_t> arrr4 = {4,6,1,4,6,8,11,10,45,24,3,4,1,4,66,1,3,5,56,22};
+    Vector<uint32_t> arrr5 = {4,6,1,4,6,8,11,10,45,24,3,4,1,4,66,1,3,5,56,22};
+    Vector<uint32_t> arrr6 = {4,6,1,4,6,8,11,10,45,24,3,4,1,4,66,1,3,5,56,22};
+    Vector<uint32_t> arrr7 = {4,6,1,4,6,8,11,10,45,24,3,4,1,4,66,1,3,5,56,22};
+    start_time = std::chrono::high_resolution_clock::now();
+    directlyInsertSort(arrr);
+    end_time = std::chrono::high_resolution_clock::now();
+    std::cout << (end_time - start_time).count() << std::endl;
+
+    start_time = std::chrono::high_resolution_clock::now();
+    binaryInsertSort(arrr2);
+    end_time = std::chrono::high_resolution_clock::now();
+    std::cout << (end_time - start_time).count() << std::endl;
+
+    start_time = std::chrono::high_resolution_clock::now();
+    twoWayInsertSort(arrr3);
+    end_time = std::chrono::high_resolution_clock::now();
+    std::cout << (end_time - start_time).count() << std::endl;
+
+    start_time = std::chrono::high_resolution_clock::now();
+    shellSort(arrr4, {5, 3, 1});
+    end_time = std::chrono::high_resolution_clock::now();
+    std::cout << (end_time - start_time).count() << std::endl;
+
+    start_time = std::chrono::high_resolution_clock::now();
+    bubbleSort(arrr5);
+    end_time = std::chrono::high_resolution_clock::now();
+    std::cout << (end_time - start_time).count() << std::endl;
+
+    start_time = std::chrono::high_resolution_clock::now();
+    quickSort(arrr6, 0, static_cast<int>(arrr6.size()) - 1);
+    end_time = std::chrono::high_resolution_clock::now();
+    std::cout << (end_time - start_time).count() << std::endl;
+
+    start_time = std::chrono::high_resolution_clock::now();
+    selectSort(arrr7);
+    end_time = std::chrono::high_resolution_clock::now();
+    std::cout << (end_time - start_time).count() << std::endl;
+
+    for(auto& a : arrr)
+        std::cout << a << ' ';
+    std::cout << std::endl;
+    for(auto& a : arrr2)
+        std::cout << a << ' ';
+    std::cout << std::endl;
+    for(auto& a : arrr3)
+        std::cout << a << ' ';
+    std::cout << std::endl;
+    for(auto& a : arrr4)
+        std::cout << a << ' ';
+    std::cout << std::endl;
+    for(auto& a : arrr5)
+        std::cout << a << ' ';
+    std::cout << std::endl;
+    for(auto& a : arrr6)
+        std::cout << a << ' ';
+    std::cout << std::endl;
+    for(auto& a : arrr7)
+        std::cout << a << ' ';
 
 	return 0;
 }
