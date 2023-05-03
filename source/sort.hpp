@@ -212,5 +212,46 @@ template<typename Ty_Key, typename Compare = CompareLess<Ty_Key>>
 void heapSort(Vector<Ty_Key>& arr)
 {
     //construct heap
+    for(int i = (arr.size() >> 1) - 1; i >= 0; i--)
+    {
+        int middle = i;
+        for (int j = 2 * i + 1; j < arr.size(); j = 2 * j + 1)
+        {
+            if (j < arr.size() - 1 && Compare()(arr[j], arr[j + 1]))
+                j++;
+            if (Compare()(arr[middle], arr[j]))
+            {
+                Ty_Key tmp = arr[middle];
+                arr[middle] = arr[j];
+                arr[j] = tmp;
+                middle = j;
+            }
+            else
+                break;
+        }
+    }
 
+    //sort
+    for(int i = arr.size() - 1; i > 0; i--)
+    {
+        Ty_Key tmp = arr[0];
+        arr[0] = arr[i];
+        arr[i] = tmp;
+
+        int middle = 0;
+        for (int j = 1; j < i; j = 2 * j + 1)
+        {
+            if (j < i - 1 && Compare()(arr[j], arr[j + 1]))
+                j++;
+            if (Compare()(arr[middle], arr[j]))
+            {
+                tmp = arr[middle];
+                arr[middle] = arr[j];
+                arr[j] = tmp;
+                middle = j;
+            }
+            else
+                break;
+        }
+    }
 }

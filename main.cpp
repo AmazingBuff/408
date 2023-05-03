@@ -207,6 +207,7 @@ int main()
     Vector<uint32_t> arrr5 = {4,6,1,4,6,8,11,10,45,24,3,4,1,4,66,1,3,5,56,22};
     Vector<uint32_t> arrr6 = {4,6,1,4,6,8,11,10,45,24,3,4,1,4,66,1,3,5,56,22};
     Vector<uint32_t> arrr7 = {4,6,1,4,6,8,11,10,45,24,3,4,1,4,66,1,3,5,56,22};
+    Vector<uint32_t> arrr8 = {4,6,1,4,6,8,11,10,45,24,3,4,1,4,66,1,3,5,56,22};
     start_time = std::chrono::high_resolution_clock::now();
     directlyInsertSort(arrr);
     end_time = std::chrono::high_resolution_clock::now();
@@ -242,6 +243,11 @@ int main()
     end_time = std::chrono::high_resolution_clock::now();
     std::cout << (end_time - start_time).count() << std::endl;
 
+    start_time = std::chrono::high_resolution_clock::now();
+    heapSort(arrr8);
+    end_time = std::chrono::high_resolution_clock::now();
+    std::cout << (end_time - start_time).count() << std::endl;
+
     for(auto& a : arrr)
         std::cout << a << ' ';
     std::cout << std::endl;
@@ -261,6 +267,9 @@ int main()
         std::cout << a << ' ';
     std::cout << std::endl;
     for(auto& a : arrr7)
+        std::cout << a << ' ';
+    std::cout << std::endl;
+    for(auto& a : arrr8)
         std::cout << a << ' ';
 
 	return 0;
