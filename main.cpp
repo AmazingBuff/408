@@ -208,6 +208,7 @@ int main()
     Vector<uint32_t> arrr6 = {4,6,1,4,6,8,11,10,45,24,3,4,1,4,66,1,3,5,56,22};
     Vector<uint32_t> arrr7 = {4,6,1,4,6,8,11,10,45,24,3,4,1,4,66,1,3,5,56,22};
     Vector<uint32_t> arrr8 = {4,6,1,4,6,8,11,10,45,24,3,4,1,4,66,1,3,5,56,22};
+    Vector<uint32_t> arrr9 = {4,6,1,4,6,8,11,10,45,24,3,4,1,4,66,1,3,5,56,22};
     start_time = std::chrono::high_resolution_clock::now();
     directlyInsertSort(arrr);
     end_time = std::chrono::high_resolution_clock::now();
@@ -248,29 +249,37 @@ int main()
     end_time = std::chrono::high_resolution_clock::now();
     std::cout << (end_time - start_time).count() << std::endl;
 
+    start_time = std::chrono::high_resolution_clock::now();
+    mergeSort(arrr9);
+    end_time = std::chrono::high_resolution_clock::now();
+    std::cout << (end_time - start_time).count() << std::endl;
+
     for(auto& a : arrr)
-        std::cout << a << ' ';
+        std::cout << a << " 1 ";
     std::cout << std::endl;
     for(auto& a : arrr2)
-        std::cout << a << ' ';
+        std::cout << a << " 2 ";
     std::cout << std::endl;
     for(auto& a : arrr3)
-        std::cout << a << ' ';
+        std::cout << a << " 3 ";
     std::cout << std::endl;
     for(auto& a : arrr4)
-        std::cout << a << ' ';
+        std::cout << a << " 4 ";
     std::cout << std::endl;
     for(auto& a : arrr5)
-        std::cout << a << ' ';
+        std::cout << a << " 5 ";
     std::cout << std::endl;
     for(auto& a : arrr6)
-        std::cout << a << ' ';
+        std::cout << a << " 6 ";
     std::cout << std::endl;
     for(auto& a : arrr7)
-        std::cout << a << ' ';
+        std::cout << a << " 7 ";
     std::cout << std::endl;
     for(auto& a : arrr8)
-        std::cout << a << ' ';
+        std::cout << a << " 8 ";
+    std::cout << std::endl;
+    for(auto& a : arrr9)
+        std::cout << a << " 9 ";
 
 	return 0;
 }

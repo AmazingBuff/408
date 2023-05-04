@@ -62,6 +62,7 @@ public:
 			data = nullptr;
 	}
 
+    //with interval [first, last)
 	Vector(T* first, T* last)
 	{
 		length = last - first;

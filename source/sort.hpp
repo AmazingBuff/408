@@ -261,39 +261,64 @@ void heapSort(Vector<Ty_Key>& arr)
 template<typename Ty_Key, typename Compare = CompareLess<Ty_Key>>
 void mergeSort(Vector<Ty_Key>& arr)
 {
-    auto merge = [](Vector<Ty_Key>& a, int m, int n, int p, int q)
+    auto merge = [](const Vector<Ty_Key>& a, const Vector<Ty_Key>& b)
     {
         Vector<Ty_Key> ret;
 
-        int i = m, j = p;
-        while(i < n && j < q)
+        int i = 0, j = 0;
+        while(i < a.size() && j < b.size())
         {
-            if(Compare()(a[i], a[j]))
+            if(Compare()(a[i], b[j]))
             {
                 ret.push_back(a[i]);
                 i++;
             }
             else
             {
-                ret.push_back(a[j]);
+                ret.push_back(b[j]);
                 j++;
             }
         }
 
-        while(i < n)
+        while(i < a.size())
         {
             ret.push_back(a[i]);
             i++;
         }
 
-        while(j < q)
+        while(j < b.size())
         {
-            ret.push_back(a[j]);
+            ret.push_back(b[j]);
             j++;
         }
 
         return ret;
     };
 
+    auto sort = [
+        inner = [merge](auto&& self, Vector<Ty_Key> a)->Vector<Ty_Key>
+        {
+            if(a.size() == 1)
+                return a;
+
+            int mid = a.size() >> 1;
+
+            Vector<Ty_Key> left = self(self, Vector<Ty_Key>(a.begin(), a.begin() + mid));
+            Vector<Ty_Key> right = self(self, Vector<Ty_Key>(a.begin() + mid, a.end()));
+
+            return merge(left, right);
+        }](Vector<Ty_Key>& a)
+    {
+        return inner(inner, a);
+    };
+
+    arr = sort(arr);
+}
+
+
+//radix sort
+template<typename Ty_Key, typename Compare = CompareLess<Ty_Key>>
+void radixSort(Vector<Ty_Key>& arr)
+{
 
 }
